@@ -1,0 +1,51 @@
+"use client";
+
+import { use } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { MOCK_EVENTS } from "@/lib/mock-data";
+import EventForm from "@/components/shared/EventForm";
+import { ArrowLeft, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+export default function EditEventPage({ params }: PageProps<"/admin/events/[id]">) {
+  const { id } = use(params);
+  const router = useRouter();
+  const event = MOCK_EVENTS.find((e) => e.id === id);
+
+  if (!event) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-gray-500">Event not found.</p>
+        <Link href="/admin/events" className="text-indigo-600 hover:underline mt-2 inline-block">Back to Events</Link>
+      </div>
+    );
+  }
+
+  const handleSubmit = (data: unknown) => {
+    console.log("Updated event:", data);
+    router.push("/admin/events");
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <Link href="/admin/events" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600 mb-4">
+            <ArrowLeft className="w-4 h-4" /> Back to Events
+          </Link>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Edit Event</h1>
+          <p className="text-gray-500 text-sm mt-1 truncate max-w-[200px] sm:max-w-none">{event.title}</p>
+        </div>
+        <Link href={`/admin/events/${id}/registrants`} className="shrink-0">
+          <Button variant="outline" className="gap-1.5 px-2.5 sm:px-4">
+            <Users className="w-4 h-4" />
+            <span className="hidden sm:inline">View Registrants ({event.registrations})</span>
+            <span className="sm:hidden">{event.registrations}</span>
+          </Button>
+        </Link>
+      </div>
+      <EventForm initial={event} submitLabel="Save Changes" onSubmit={handleSubmit} />
+    </div>
+  );
+}
