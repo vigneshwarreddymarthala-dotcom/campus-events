@@ -7,8 +7,9 @@ import { getAdaptedEvent, getEventRegistrations, toggleAttendance, type DbRegist
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
-import { ArrowLeft, Search, Download, CheckCircle2, XCircle, QrCode, Users, Bell } from "lucide-react";
+import { ArrowLeft, Search, Download, CheckCircle2, XCircle, QrCode, Users, Bell, X } from "lucide-react";
 import NotificationModal from "@/components/shared/NotificationModal";
+import QRCode from "react-qr-code";
 
 type ModalTarget = { recipients: { userId: string; name: string }[]; defaultTitle: string; defaultMessage: string };
 
@@ -19,6 +20,7 @@ export default function RegistrantsPage({ params }: PageProps<"/admin/events/[id
   const [search, setSearch] = useState("");
   const [attendance, setAttendance] = useState<Record<string, boolean>>({});
   const [modal, setModal] = useState<ModalTarget | null>(null);
+  const [showQR, setShowQR] = useState(false);
 
   useEffect(() => {
     getAdaptedEvent(id).then(setEvent).catch(() => setEvent(null));
@@ -121,7 +123,7 @@ export default function RegistrantsPage({ params }: PageProps<"/admin/events/[id
               <Bell className="w-4 h-4" />
               <span className="hidden sm:inline">Notify All</span>
             </Button>
-            <Button variant="outline" className="gap-2 text-sm px-2 sm:px-4">
+            <Button variant="outline" className="gap-2 text-sm px-2 sm:px-4" onClick={() => setShowQR(true)}>
               <QrCode className="w-4 h-4" />
               <span className="hidden sm:inline">QR Check-in</span>
             </Button>
@@ -246,6 +248,38 @@ export default function RegistrantsPage({ params }: PageProps<"/admin/events/[id
           eventId={id}
           onClose={() => setModal(null)}
         />
+      )}
+
+      {/* QR Check-in modal */}
+      {showQR && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-sm text-center shadow-xl space-y-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-900">QR Check-in</h2>
+              <button onClick={() => setShowQR(false)} className="p-1 rounded-lg hover:bg-gray-100 text-gray-500">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-500">Students scan this QR code at the venue to mark their attendance.</p>
+            <div className="flex justify-center bg-white p-4 rounded-2xl border border-gray-200">
+              <QRCode
+                value={`${typeof window !== "undefined" ? window.location.origin : "https://campus-events-peach.vercel.app"}/attend/${id}`}
+                size={200}
+              />
+            </div>
+            <p className="text-xs text-gray-400 break-all">
+              {typeof window !== "undefined" ? window.location.origin : "https://campus-events-peach.vercel.app"}/attend/{id}
+            </p>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/attend/${id}`);
+              }}
+              className="w-full py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              Copy Link
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
