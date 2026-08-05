@@ -8,6 +8,7 @@ import TopNav from "@/components/shared/TopNav";
 const ADMIN_LINKS = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/events", label: "Events" },
+  { href: "/admin/students", label: "Students" },
 ];
 
 export default function AdminLayout({ children }: LayoutProps<"/admin">) {

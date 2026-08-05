@@ -257,3 +257,77 @@ export async function removeBookmark(eventId: string): Promise<void> {
     .eq("event_id", eventId);
   if (error) throw error;
 }
+
+// ── Admin: Students ───────────────────────────────────────────
+
+export type DbProfile = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  department: string | null;
+  year: string | null;
+  phone: string | null;
+};
+
+export type StudentRegistrationWithEvent = DbRegistration & {
+  event_title: string;
+  event_date: string;
+  event_time: string;
+  event_end_time: string | null;
+  event_venue: string;
+  event_fee: number;
+};
+
+export async function getAllStudents(): Promise<DbProfile[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("role", "student")
+    .order("name", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getStudentRegistrationsWithEvents(userId: string): Promise<StudentRegistrationWithEvent[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("registrations")
+    .select("*, events(title, date, time, end_time, venue, registration_fee)")
+    .eq("user_id", userId)
+    .order("registered_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((r: Record<string, unknown>) => {
+    const ev = r.events as Record<string, unknown> ?? {};
+    return {
+      id: r.id as string,
+      event_id: r.event_id as string,
+      user_id: r.user_id as string,
+      student_name: r.student_name as string,
+      student_email: r.student_email as string,
+      student_department: r.student_department as string | null,
+      student_year: r.student_year as string | null,
+      payment_status: r.payment_status as string,
+      attended: r.attended as boolean,
+      registered_at: r.registered_at as string,
+      event_title: ev.title as string ?? "",
+      event_date: ev.date as string ?? "",
+      event_time: ev.time as string ?? "",
+      event_end_time: ev.end_time as string | null ?? null,
+      event_venue: ev.venue as string ?? "",
+      event_fee: ev.registration_fee as number ?? 0,
+    };
+  });
+}
+
+export async function getStudentProfile(userId: string): Promise<DbProfile | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
+    .single();
+  if (error) return null;
+  return data;
+}
