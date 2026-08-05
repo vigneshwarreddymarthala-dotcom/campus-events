@@ -6,7 +6,7 @@ import { getStudentProfile, getStudentRegistrationsWithEvents, type DbProfile, t
 import { format, parseISO } from "date-fns";
 import {
   ArrowLeft, Mail, Phone, BookOpen, GraduationCap,
-  Calendar, CheckCircle, Clock, Printer, User, Bell,
+  Calendar, CheckCircle, Clock, Printer, User, Bell, Award,
 } from "lucide-react";
 import NotificationModal from "@/components/shared/NotificationModal";
 function calcHours(time: string, endTime: string | null): number {
@@ -23,6 +23,7 @@ export default function StudentReportPage({ params }: { params: Promise<{ id: st
   const [regs, setRegs] = useState<StudentRegistrationWithEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [notifyOpen, setNotifyOpen] = useState(false);
+  const [showCert, setShowCert] = useState(false);
 
   useEffect(() => {
     params.then(({ id }) => {
@@ -75,6 +76,12 @@ export default function StudentReportPage({ params }: { params: Promise<{ id: st
             className="flex items-center gap-2 border border-orange-200 text-orange-600 hover:bg-orange-50 px-4 py-2 rounded-xl text-sm font-medium transition-colors"
           >
             <Bell className="w-4 h-4" /> Notify
+          </button>
+          <button
+            onClick={() => setShowCert(true)}
+            className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-yellow-600 transition-colors"
+          >
+            <Award className="w-4 h-4" /> Certificate
           </button>
           <button
             onClick={() => window.print()}
@@ -187,6 +194,81 @@ export default function StudentReportPage({ params }: { params: Promise<{ id: st
       <div className="hidden print:block text-center text-xs text-gray-400 pt-4 border-t">
         CampusEvents Platform · Confidential
       </div>
+
+      {/* Certificate modal */}
+      {showCert && student && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 overflow-y-auto py-8">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden">
+            {/* Certificate content */}
+            <div id="certificate" className="p-12 text-center border-8 border-double border-yellow-400 m-4 rounded-2xl">
+              <div className="mb-4 flex justify-center">
+                <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center">
+                  <Award className="w-7 h-7 text-white" />
+                </div>
+              </div>
+              <p className="text-xs tracking-[0.3em] text-gray-400 uppercase font-semibold mb-2">CampusEvents</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-1">Certificate of Participation</h1>
+              <p className="text-gray-500 text-sm mb-6">This is to certify that</p>
+              <p className="text-4xl font-bold text-indigo-700 mb-2">{student.name}</p>
+              {student.department && <p className="text-gray-500 text-sm mb-6">{student.department} · {student.year}</p>}
+              <p className="text-gray-600 mb-6">
+                has successfully participated in <strong>{attended.length} event{attended.length !== 1 ? "s" : ""}</strong>{" "}
+                and completed a total of <strong>{totalHours} hours</strong> of campus engagement.
+              </p>
+
+              {attended.length > 0 && (
+                <div className="text-left bg-gray-50 rounded-xl p-4 mb-6 space-y-2">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Events Participated</p>
+                  {attended.map((r) => (
+                    <div key={r.id} className="flex items-center justify-between text-sm">
+                      <span className="text-gray-800 font-medium">{r.event_title}</span>
+                      <span className="text-gray-400">{r.event_date ? format(parseISO(r.event_date), "dd MMM yyyy") : "—"} · {calcHours(r.event_time, r.event_end_time)}h</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
+                <div className="text-left">
+                  <div className="w-32 h-0.5 bg-gray-400 mb-1" />
+                  <p className="text-xs text-gray-500">Organizer Signature</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-gray-400">{format(new Date(), "MMMM d, yyyy")}</p>
+                  <p className="text-xs text-gray-400">Date Issued</p>
+                </div>
+                <div className="text-right">
+                  <div className="w-32 h-0.5 bg-gray-400 mb-1 ml-auto" />
+                  <p className="text-xs text-gray-500">CampusEvents</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 px-6 pb-6">
+              <button
+                onClick={() => setShowCert(false)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  const el = document.getElementById("certificate");
+                  if (!el) return;
+                  const win = window.open("", "_blank");
+                  if (!win) return;
+                  win.document.write(`<html><head><title>Certificate - ${student.name}</title><style>body{font-family:sans-serif;margin:0;padding:20px;} *{box-sizing:border-box;}</style></head><body>${el.outerHTML}</body></html>`);
+                  win.document.close();
+                  win.print();
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-yellow-500 text-white text-sm font-semibold hover:bg-yellow-600 transition-colors flex items-center justify-center gap-2"
+              >
+                <Printer className="w-4 h-4" /> Print Certificate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Notification modal */}
       {notifyOpen && student && (

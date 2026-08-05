@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { getAdaptedEvent, markMyAttendance } from "@/lib/db";
 import { type Event } from "@/lib/mock-data";
-import { CheckCircle2, XCircle, Clock, GraduationCap } from "lucide-react";
+import { CheckCircle2, XCircle, GraduationCap, MapPin, Calendar } from "lucide-react";
+import { format, parseISO } from "date-fns";
 
-type Status = "loading" | "marking" | "ok" | "already" | "not_registered" | "not_auth" | "error";
+type Status = "loading" | "ready" | "marking" | "ok" | "already" | "not_registered" | "not_auth" | "error";
 
 export default function AttendPage({ params }: { params: Promise<{ eventId: string }> }) {
   const { eventId } = use(params);
@@ -24,7 +25,6 @@ export default function AttendPage({ params }: { params: Promise<{ eventId: stri
     if (authLoading || !event) return;
 
     if (!user) {
-      // Redirect to login, come back after
       router.replace(`/login?redirect=/attend/${eventId}`);
       return;
     }
@@ -34,6 +34,11 @@ export default function AttendPage({ params }: { params: Promise<{ eventId: stri
       return;
     }
 
+    // Don't auto-mark — just show the confirm button
+    setStatus("ready");
+  }, [authLoading, user, event, eventId, router]);
+
+  const handleConfirm = async () => {
     setStatus("marking");
     markMyAttendance(eventId)
       .then((result) => {
@@ -42,16 +47,56 @@ export default function AttendPage({ params }: { params: Promise<{ eventId: stri
         else setStatus("not_registered");
       })
       .catch(() => setStatus("error"));
-  }, [authLoading, user, event, eventId, router]);
+  };
 
   const content = () => {
-    if (status === "loading" || status === "marking") {
+    if (status === "loading") {
       return (
         <div className="text-center space-y-4">
           <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-gray-600 font-medium">
-            {status === "loading" ? "Loading event…" : "Checking you in…"}
-          </p>
+          <p className="text-gray-600 font-medium">Loading event…</p>
+        </div>
+      );
+    }
+
+    if (status === "ready") {
+      return (
+        <div className="text-center space-y-5">
+          <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-10 h-10 text-indigo-600" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Check in to</h2>
+            <p className="text-lg font-semibold text-indigo-700 mt-1">{event?.title}</p>
+            {event && (
+              <div className="mt-3 space-y-1">
+                <p className="text-sm text-gray-500 flex items-center justify-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" />
+                  {format(parseISO(event.date), "EEEE, MMMM d, yyyy")} · {event.time}
+                </p>
+                <p className="text-sm text-gray-500 flex items-center justify-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5" />
+                  {event.venue}
+                </p>
+              </div>
+            )}
+          </div>
+          <p className="text-sm text-gray-400">Logged in as <span className="font-medium text-gray-700">{user?.name}</span></p>
+          <button
+            onClick={handleConfirm}
+            className="w-full bg-indigo-600 text-white py-3.5 rounded-2xl font-bold text-lg hover:bg-indigo-700 active:scale-95 transition-all shadow-lg shadow-indigo-200"
+          >
+            Mark me Present ✓
+          </button>
+        </div>
+      );
+    }
+
+    if (status === "marking") {
+      return (
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-gray-600 font-medium">Checking you in…</p>
         </div>
       );
     }
@@ -69,7 +114,7 @@ export default function AttendPage({ params }: { params: Promise<{ eventId: stri
           </div>
           <button
             onClick={() => router.push("/student/my-events")}
-            className="mt-2 bg-indigo-600 text-white px-8 py-2.5 rounded-xl font-semibold hover:bg-indigo-700 transition-colors"
+            className="bg-indigo-600 text-white px-8 py-2.5 rounded-xl font-semibold hover:bg-indigo-700 transition-colors"
           >
             My Events
           </button>
@@ -108,7 +153,7 @@ export default function AttendPage({ params }: { params: Promise<{ eventId: stri
             <h2 className="text-2xl font-bold text-gray-900">Not registered</h2>
             <p className="text-gray-500 mt-1">You are not registered for</p>
             <p className="text-lg font-semibold text-indigo-700 mt-1">{event?.title}</p>
-            <p className="text-sm text-gray-400 mt-2">Please register for the event first to check in.</p>
+            <p className="text-sm text-gray-400 mt-2">Please register for the event first.</p>
           </div>
           <button
             onClick={() => router.push(`/student/events/${eventId}`)}
@@ -140,10 +185,10 @@ export default function AttendPage({ params }: { params: Promise<{ eventId: stri
         <h2 className="text-2xl font-bold text-gray-900">Something went wrong</h2>
         <p className="text-gray-500">Could not mark your attendance. Please try again.</p>
         <button
-          onClick={() => window.location.reload()}
+          onClick={() => { setStatus("ready"); }}
           className="bg-indigo-600 text-white px-8 py-2.5 rounded-xl font-semibold hover:bg-indigo-700 transition-colors"
         >
-          Retry
+          Try Again
         </button>
       </div>
     );
@@ -158,16 +203,9 @@ export default function AttendPage({ params }: { params: Promise<{ eventId: stri
         <span className="text-xl font-bold text-gray-900">CampusEvents</span>
       </div>
 
-      <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-10 w-full max-w-md">
+      <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-10 w-full max-w-sm">
         {content()}
       </div>
-
-      {event && (
-        <div className="mt-6 flex items-center gap-1.5 text-sm text-gray-400">
-          <Clock className="w-3.5 h-3.5" />
-          {event.date} · {event.venue}
-        </div>
-      )}
     </div>
   );
 }
