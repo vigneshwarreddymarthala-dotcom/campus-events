@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { GraduationCap, LogOut, User } from "lucide-react";
+import NotificationBell from "@/components/shared/NotificationBell";
 
 type NavLink = { href: string; label: string; mobileLabel?: string };
 
@@ -60,6 +61,9 @@ export default function TopNav({ links }: { links: NavLink[] }) {
             );
           })}
         </nav>
+
+        {/* Notification bell — students only */}
+        {user?.role === "student" && <NotificationBell />}
 
         {/* User menu */}
         <DropdownMenu>

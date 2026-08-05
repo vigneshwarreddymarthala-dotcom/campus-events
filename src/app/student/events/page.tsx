@@ -1,27 +1,45 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { CATEGORIES, Category, isEventPast, type Event } from "@/lib/mock-data";
 import { getAdaptedEvents, getMyBookmarks, getMyRegistrations, addBookmark, removeBookmark } from "@/lib/db";
 import EventCard from "@/components/shared/EventCard";
 import { Input } from "@/components/ui/input";
 import { Search, LayoutGrid, List, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO } from "date-fns";
 
 type SortMode = "newest" | "date" | "trending";
 type ViewMode = "grid" | "list" | "calendar";
 
 export default function StudentEventsPage() {
+  return (
+    <Suspense>
+      <StudentEventsPageInner />
+    </Suspense>
+  );
+}
+
+function StudentEventsPageInner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [events, setEvents] = useState<Event[]>([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<"all" | Category>("all");
   const [feeFilter, setFeeFilter] = useState<"all" | "free" | "paid">("all");
   const [sort, setSort] = useState<SortMode>("date");
-  const [view, setView] = useState<ViewMode>("grid");
+  const [view, setView] = useState<ViewMode>((searchParams.get("view") as ViewMode) || "grid");
   const [bookmarks, setBookmarks] = useState<string[]>([]);
   const [registrations, setRegistrations] = useState<string[]>([]);
   const [calMonth] = useState(new Date());
   const [showPast, setShowPast] = useState(false);
+
+  const setViewAndUrl = (v: ViewMode) => {
+    setView(v);
+    const params = new URLSearchParams(window.location.search);
+    params.set("view", v);
+    router.replace(`/student/events?${params.toString()}`, { scroll: false });
+  };
 
   useEffect(() => {
     getAdaptedEvents().then(setEvents).catch(console.error);
@@ -143,8 +161,8 @@ export default function StudentEventsPage() {
             {(["grid", "list", "calendar"] as ViewMode[]).map((v) => (
               <button
                 key={v}
-                onClick={() => setView(v)}
-                className={`p-1.5 rounded-lg transition-colors ${view === v ? "bg-indigo-600 text-white" : "text-gray-400 hover:bg-gray-100"}`}
+                onClick={() => setViewAndUrl(v)}
+                className={`p-1.5 rounded-lg transition-colors ${view === v ? "bg-indigo-600 text-white" : "text-gray-400 hover:bg-gray-100"} ${v === "grid" ? "hidden sm:flex" : "flex"}`}
                 title={v.charAt(0).toUpperCase() + v.slice(1)}
               >
                 {v === "grid" && <LayoutGrid className="w-4 h-4" />}
@@ -161,8 +179,8 @@ export default function StudentEventsPage() {
         </div>
       </div>
 
-      {/* Category chips */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      {/* Category chips — sticky below the top nav */}
+      <div className="sticky top-14 sm:top-16 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 bg-gray-50 pt-2 pb-2 flex gap-2 overflow-x-auto scrollbar-hide border-b border-gray-100">
         {[{ value: "all", label: "All" }, ...CATEGORIES].map((c) => (
           <button
             key={c.value}
@@ -202,19 +220,21 @@ export default function StudentEventsPage() {
                         : "border-indigo-200 bg-indigo-50"
                       : "border-gray-100"
                   }`}
+                  role={dayEvents.length > 0 ? "button" : undefined}
                 >
                   <p className="text-xs font-medium text-gray-500 mb-1">{format(day, "d")}</p>
                   {dayEvents.slice(0, 2).map((e) => (
-                    <div
+                    <button
                       key={e.id}
-                      className={`text-xs rounded px-1.5 py-0.5 mb-0.5 truncate ${
+                      onClick={() => router.push(`/student/events/${e.id}?from=calendar`)}
+                      className={`w-full text-left text-xs rounded px-1.5 py-0.5 mb-0.5 truncate cursor-pointer transition-opacity hover:opacity-80 ${
                         isEventPast(e)
                           ? "bg-gray-400 text-white"
                           : "bg-indigo-600 text-white"
                       }`}
                     >
                       {e.title}
-                    </div>
+                    </button>
                   ))}
                   {dayEvents.length > 2 && (
                     <div className="text-xs text-indigo-600 font-medium">+{dayEvents.length - 2} more</div>

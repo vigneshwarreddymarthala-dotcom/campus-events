@@ -6,8 +6,8 @@ import { useAuth } from "@/contexts/auth-context";
 import TopNav from "@/components/shared/TopNav";
 
 const STUDENT_LINKS = [
-  { href: "/student/events", label: "Discover Events" },
-  { href: "/student/my-events", label: "My Events" },
+  { href: "/student/events", label: "Discover Events", mobileLabel: "Events" },
+  { href: "/student/my-events", label: "My Events", mobileLabel: "My Events" },
 ];
 
 export default function StudentLayout({ children }: LayoutProps<"/student">) {

@@ -7,7 +7,10 @@ import { getAdaptedEvent, getEventRegistrations, toggleAttendance, type DbRegist
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
-import { ArrowLeft, Search, Download, CheckCircle2, XCircle, QrCode, Users } from "lucide-react";
+import { ArrowLeft, Search, Download, CheckCircle2, XCircle, QrCode, Users, Bell } from "lucide-react";
+import NotificationModal from "@/components/shared/NotificationModal";
+
+type ModalTarget = { recipients: { userId: string; name: string }[]; defaultTitle: string; defaultMessage: string };
 
 export default function RegistrantsPage({ params }: PageProps<"/admin/events/[id]/registrants">) {
   const { id } = use(params);
@@ -15,6 +18,7 @@ export default function RegistrantsPage({ params }: PageProps<"/admin/events/[id
   const [registrants, setRegistrants] = useState<DbRegistration[]>([]);
   const [search, setSearch] = useState("");
   const [attendance, setAttendance] = useState<Record<string, boolean>>({});
+  const [modal, setModal] = useState<ModalTarget | null>(null);
 
   useEffect(() => {
     getAdaptedEvent(id).then(setEvent).catch(() => setEvent(null));
@@ -35,11 +39,39 @@ export default function RegistrantsPage({ params }: PageProps<"/admin/events/[id
   );
 
   const attendedCount = Object.values(attendance).filter(Boolean).length;
+  const noShows = registrants.filter((r) => !attendance[r.id] && r.user_id);
 
   const handleToggleAttendance = async (regId: string) => {
     const newVal = !attendance[regId];
     setAttendance((prev) => ({ ...prev, [regId]: newVal }));
     await toggleAttendance(regId, newVal).catch(console.error);
+  };
+
+  const openNotifyOne = (r: DbRegistration) => {
+    setModal({
+      recipients: [{ userId: r.user_id, name: r.student_name }],
+      defaultTitle: `You missed: ${event.title}`,
+      defaultMessage: `Hi ${r.student_name.split(" ")[0]}, we noticed you didn't check in for "${event.title}" on ${format(new Date(event.date), "dd MMM yyyy")}. We hope you're doing well — see you at our next event!`,
+    });
+  };
+
+  const openNotifyNoShows = () => {
+    if (noShows.length === 0) return;
+    setModal({
+      recipients: noShows.map((r) => ({ userId: r.user_id, name: r.student_name })),
+      defaultTitle: `You missed: ${event.title}`,
+      defaultMessage: `Hi, we noticed you didn't check in for "${event.title}" on ${format(new Date(event.date), "dd MMM yyyy")}. We hope you're doing well — see you at our next event!`,
+    });
+  };
+
+  const openNotifyAll = () => {
+    const withUserId = registrants.filter((r) => r.user_id);
+    if (withUserId.length === 0) return;
+    setModal({
+      recipients: withUserId.map((r) => ({ userId: r.user_id, name: r.student_name })),
+      defaultTitle: `Update from ${event.title}`,
+      defaultMessage: `Hi, thank you for registering for "${event.title}". Here's an update from the organizers.`,
+    });
   };
 
   const exportCSV = () => {
@@ -65,12 +97,30 @@ export default function RegistrantsPage({ params }: PageProps<"/admin/events/[id
         <Link href={`/admin/events/${id}`} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600 mb-4">
           <ArrowLeft className="w-4 h-4" /> Back to Event
         </Link>
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Registrants</h1>
             <p className="text-gray-500 text-sm mt-1 truncate max-w-[200px] sm:max-w-none">{event.title}</p>
           </div>
-          <div className="flex gap-2 shrink-0">
+          <div className="flex gap-2 shrink-0 flex-wrap">
+            {noShows.length > 0 && (
+              <Button
+                variant="outline"
+                className="gap-2 text-sm px-3 border-orange-200 text-orange-600 hover:bg-orange-50"
+                onClick={openNotifyNoShows}
+              >
+                <Bell className="w-4 h-4" />
+                <span className="hidden sm:inline">Notify No-shows</span>
+                <span className="sm:hidden">No-shows</span>
+                <span className="bg-orange-100 text-orange-700 text-xs font-bold px-1.5 py-0.5 rounded-full">
+                  {noShows.length}
+                </span>
+              </Button>
+            )}
+            <Button variant="outline" className="gap-2 text-sm px-2 sm:px-4" onClick={openNotifyAll}>
+              <Bell className="w-4 h-4" />
+              <span className="hidden sm:inline">Notify All</span>
+            </Button>
             <Button variant="outline" className="gap-2 text-sm px-2 sm:px-4">
               <QrCode className="w-4 h-4" />
               <span className="hidden sm:inline">QR Check-in</span>
@@ -116,10 +166,10 @@ export default function RegistrantsPage({ params }: PageProps<"/admin/events/[id
       {/* Table */}
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[700px]">
+          <table className="w-full text-sm min-w-[720px]">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                {["#", "Name", "Email", "Year", "Dept.", "Registered", "Attended"].map((h) => (
+                {["#", "Name", "Email", "Year", "Dept.", "Registered", "Attended", "Notify"].map((h) => (
                   <th key={h} className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -127,7 +177,7 @@ export default function RegistrantsPage({ params }: PageProps<"/admin/events/[id
             <tbody className="divide-y divide-gray-100">
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-gray-400">
+                  <td colSpan={8} className="px-4 py-10 text-center text-gray-400">
                     {registrants.length === 0 ? "No registrations yet." : "No results found."}
                   </td>
                 </tr>
@@ -161,9 +211,24 @@ export default function RegistrantsPage({ params }: PageProps<"/admin/events/[id
                       {attendance[r.id] ? (
                         <><CheckCircle2 className="w-3.5 h-3.5" /> Present</>
                       ) : (
-                        <><XCircle className="w-3.5 h-3.5" /> Mark</>
+                        <><XCircle className="w-3.5 h-3.5" /> Absent</>
                       )}
                     </button>
+                  </td>
+                  <td className="px-4 py-3">
+                    {r.user_id && (
+                      <button
+                        onClick={() => openNotifyOne(r)}
+                        title="Send notification"
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          !attendance[r.id]
+                            ? "text-orange-500 hover:bg-orange-50"
+                            : "text-gray-300 hover:bg-gray-100"
+                        }`}
+                      >
+                        <Bell className="w-4 h-4" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -171,6 +236,17 @@ export default function RegistrantsPage({ params }: PageProps<"/admin/events/[id
           </table>
         </div>
       </div>
+
+      {/* Notification modal */}
+      {modal && (
+        <NotificationModal
+          recipients={modal.recipients}
+          defaultTitle={modal.defaultTitle}
+          defaultMessage={modal.defaultMessage}
+          eventId={id}
+          onClose={() => setModal(null)}
+        />
+      )}
     </div>
   );
 }

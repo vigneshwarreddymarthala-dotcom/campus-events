@@ -6,8 +6,9 @@ import { getStudentProfile, getStudentRegistrationsWithEvents, type DbProfile, t
 import { format, parseISO } from "date-fns";
 import {
   ArrowLeft, Mail, Phone, BookOpen, GraduationCap,
-  Calendar, CheckCircle, Clock, Printer, User,
+  Calendar, CheckCircle, Clock, Printer, User, Bell,
 } from "lucide-react";
+import NotificationModal from "@/components/shared/NotificationModal";
 function calcHours(time: string, endTime: string | null): number {
   if (!endTime) return 2;
   const [sh, sm] = time.split(":").map(Number);
@@ -21,6 +22,7 @@ export default function StudentReportPage({ params }: { params: Promise<{ id: st
   const [student, setStudent] = useState<DbProfile | null>(null);
   const [regs, setRegs] = useState<StudentRegistrationWithEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notifyOpen, setNotifyOpen] = useState(false);
 
   useEffect(() => {
     params.then(({ id }) => {
@@ -59,7 +61,7 @@ export default function StudentReportPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      {/* Back + print */}
+      {/* Back + actions */}
       <div className="flex items-center justify-between print:hidden">
         <button
           onClick={() => router.push("/admin/students")}
@@ -67,12 +69,20 @@ export default function StudentReportPage({ params }: { params: Promise<{ id: st
         >
           <ArrowLeft className="w-4 h-4" /> Back to Students
         </button>
-        <button
-          onClick={() => window.print()}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors"
-        >
-          <Printer className="w-4 h-4" /> Print Report
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setNotifyOpen(true)}
+            className="flex items-center gap-2 border border-orange-200 text-orange-600 hover:bg-orange-50 px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+          >
+            <Bell className="w-4 h-4" /> Notify
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors"
+          >
+            <Printer className="w-4 h-4" /> Print Report
+          </button>
+        </div>
       </div>
 
       {/* Print header (only visible when printing) */}
@@ -177,6 +187,16 @@ export default function StudentReportPage({ params }: { params: Promise<{ id: st
       <div className="hidden print:block text-center text-xs text-gray-400 pt-4 border-t">
         CampusEvents Platform · Confidential
       </div>
+
+      {/* Notification modal */}
+      {notifyOpen && student && (
+        <NotificationModal
+          recipients={[{ userId: student.id, name: student.name }]}
+          defaultTitle="Message from Campus Events"
+          defaultMessage={`Hi ${student.name.split(" ")[0]}, `}
+          onClose={() => setNotifyOpen(false)}
+        />
+      )}
     </div>
   );
 }

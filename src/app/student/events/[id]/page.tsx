@@ -1,7 +1,8 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { CATEGORY_COLORS, type Event } from "@/lib/mock-data";
 import { useAuth } from "@/contexts/auth-context";
 import { getAdaptedEvent, isRegisteredForEvent, getMyBookmarks, addBookmark, removeBookmark, registerForEvent, cancelRegistration } from "@/lib/db";
@@ -16,8 +17,19 @@ import {
 } from "lucide-react";
 
 export default function StudentEventDetailPage({ params }: PageProps<"/student/events/[id]">) {
+  return (
+    <Suspense>
+      <StudentEventDetailPageInner params={params} />
+    </Suspense>
+  );
+}
+
+function StudentEventDetailPageInner({ params }: { params: PageProps<"/student/events/[id]">["params"] }) {
   const { id } = use(params);
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const fromCalendar = searchParams.get("from") === "calendar";
+  const backHref = fromCalendar ? "/student/events?view=calendar" : "/student/events";
   const [event, setEvent] = useState<Event | null | undefined>(undefined);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
@@ -137,7 +149,7 @@ export default function StudentEventDetailPage({ params }: PageProps<"/student/e
   return (
     <div className="space-y-6 pb-20 lg:pb-0">
       {/* Back */}
-      <Link href="/student/events" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600">
+      <Link href={backHref} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600">
         <ArrowLeft className="w-4 h-4" /> Back to Events
       </Link>
 

@@ -258,6 +258,74 @@ export async function removeBookmark(eventId: string): Promise<void> {
   if (error) throw error;
 }
 
+// ── Notifications ─────────────────────────────────────────────
+
+export type DbNotification = {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  event_id: string | null;
+  read: boolean;
+  sent_by: string | null;
+  created_at: string;
+};
+
+export async function getMyNotifications(): Promise<DbNotification[]> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) return [];
+  return data ?? [];
+}
+
+export async function markNotificationRead(id: string): Promise<void> {
+  const supabase = createClient();
+  await supabase.from("notifications").update({ read: true }).eq("id", id);
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from("notifications").update({ read: true }).eq("user_id", user.id).eq("read", false);
+}
+
+export async function sendNotification(userId: string, title: string, message: string, eventId?: string): Promise<void> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+  const { error } = await supabase.from("notifications").insert({
+    user_id: userId,
+    title,
+    message,
+    event_id: eventId ?? null,
+    sent_by: user.id,
+  });
+  if (error) throw error;
+}
+
+export async function sendNotificationToUsers(
+  userIds: string[],
+  title: string,
+  message: string,
+  eventId?: string
+): Promise<void> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+  const { error } = await supabase.from("notifications").insert(
+    userIds.map((uid) => ({ user_id: uid, title, message, event_id: eventId ?? null, sent_by: user.id }))
+  );
+  if (error) throw error;
+}
+
 // ── Admin: Students ───────────────────────────────────────────
 
 export type DbProfile = {
