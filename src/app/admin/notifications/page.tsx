@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getAdaptedEvents, getAllStudents, sendNotificationToUsers, type DbProfile } from "@/lib/db";
+import { getAdaptedEvents, getAllStudents, getEventRegistrations, sendNotificationToUsers, type DbProfile, type DbRegistration } from "@/lib/db";
 import { type Event } from "@/lib/mock-data";
 import { Input } from "@/components/ui/input";
 import { Bell, Users, BookOpen, CalendarDays, Send, Search, CheckSquare, Square } from "lucide-react";
@@ -17,6 +17,7 @@ type TargetType = "all" | "department" | "event" | "custom";
 export default function AdminNotificationsPage() {
   const [students, setStudents] = useState<DbProfile[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
+  const [eventRegistrations, setEventRegistrations] = useState<DbRegistration[]>([]);
   const [targetType, setTargetType] = useState<TargetType>("all");
   const [selectedDept, setSelectedDept] = useState("");
   const [selectedEvent, setSelectedEvent] = useState("");
@@ -32,11 +33,29 @@ export default function AdminNotificationsPage() {
     getAdaptedEvents().then(setEvents).catch(console.error);
   }, []);
 
+  useEffect(() => {
+    if (targetType === "event" && selectedEvent) {
+      getEventRegistrations(selectedEvent).then(setEventRegistrations).catch(console.error);
+    } else {
+      setEventRegistrations([]);
+    }
+  }, [targetType, selectedEvent]);
+
   // compute recipients based on target type
   const recipients: DbProfile[] = (() => {
     if (targetType === "all") return students;
     if (targetType === "department") return students.filter((s) => s.department === selectedDept);
-    if (targetType === "event") return []; // handled separately via event registrations
+    if (targetType === "event") return eventRegistrations
+      .filter((r) => r.user_id)
+      .map((r) => ({
+        id: r.user_id,
+        name: r.student_name,
+        email: r.student_email,
+        role: "student",
+        department: r.student_department,
+        year: r.student_year,
+        phone: null,
+      }));
     if (targetType === "custom") {
       const q = search.toLowerCase();
       return students.filter(
@@ -189,6 +208,8 @@ export default function AdminNotificationsPage() {
             <p className="text-sm text-indigo-800 font-medium">
               {targetType === "event" && !selectedEvent
                 ? "Select an event to see recipients"
+                : targetType === "event" && selectedEvent && eventRegistrations.length === 0
+                ? "Loading registrants…"
                 : `${recipientCount} student${recipientCount !== 1 ? "s" : ""} will receive this notification`}
             </p>
           </div>
