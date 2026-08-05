@@ -1,9 +1,10 @@
 "use client";
 
-import { use } from "react";
+import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { MOCK_EVENTS } from "@/lib/mock-data";
+import { type Event } from "@/lib/mock-data";
+import { getAdaptedEvent, updateEvent } from "@/lib/db";
 import EventForm from "@/components/shared/EventForm";
 import { ArrowLeft, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,14 @@ import { Button } from "@/components/ui/button";
 export default function EditEventPage({ params }: PageProps<"/admin/events/[id]">) {
   const { id } = use(params);
   const router = useRouter();
-  const event = MOCK_EVENTS.find((e) => e.id === id);
+  const [event, setEvent] = useState<Event | null | undefined>(undefined);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    getAdaptedEvent(id).then(setEvent).catch(() => setEvent(null));
+  }, [id]);
+
+  if (event === undefined) return <div className="text-center py-20 text-gray-400">Loading...</div>;
 
   if (!event) {
     return (
@@ -22,9 +30,36 @@ export default function EditEventPage({ params }: PageProps<"/admin/events/[id]"
     );
   }
 
-  const handleSubmit = (data: unknown) => {
-    console.log("Updated event:", data);
-    router.push("/admin/events");
+  const handleSubmit = async (data: Partial<Event>) => {
+    setSaving(true);
+    const base = {
+      title: data.title,
+      description: data.description,
+      date: data.date,
+      end_date: data.endDate ?? null,
+      time: data.time,
+      venue: data.venue,
+      category: data.category,
+      status: data.status,
+      capacity: data.capacity,
+      registration_fee: data.registrationFee,
+      organizer_name: data.organizer,
+      organizer_email: data.contactEmail,
+      tags: data.tags,
+      banner_image: data.bannerImage,
+    };
+    try {
+      await updateEvent(id, { ...base, banner_link: data.bannerLink || null, ticket_url: data.ticketUrl || null });
+      router.push("/admin/events");
+    } catch {
+      try {
+        await updateEvent(id, base);
+        router.push("/admin/events");
+      } catch (err) {
+        console.error(err);
+        setSaving(false);
+      }
+    }
   };
 
   return (
@@ -45,7 +80,11 @@ export default function EditEventPage({ params }: PageProps<"/admin/events/[id]"
           </Button>
         </Link>
       </div>
-      <EventForm initial={event} submitLabel="Save Changes" onSubmit={handleSubmit} />
+      <EventForm
+        initial={event}
+        submitLabel={saving ? "Saving…" : "Save Changes"}
+        onSubmit={handleSubmit}
+      />
     </div>
   );
 }

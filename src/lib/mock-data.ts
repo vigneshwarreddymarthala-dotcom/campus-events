@@ -19,6 +19,8 @@ export type Event = {
   venue: string;
   mapLink?: string;
   bannerImage: string;
+  bannerLink?: string;
+  ticketUrl?: string;
   gallery: string[];
   organizer: string;
   contactEmail: string;

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { MOCK_EVENTS, CATEGORIES, Category, isEventPast } from "@/lib/mock-data";
+import { useState, useEffect } from "react";
+import { CATEGORIES, Category, isEventPast, type Event } from "@/lib/mock-data";
+import { getAdaptedEvents, getMyBookmarks, getMyRegistrations, addBookmark, removeBookmark } from "@/lib/db";
 import EventCard from "@/components/shared/EventCard";
 import { Input } from "@/components/ui/input";
 import { Search, LayoutGrid, List, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react";
@@ -11,20 +12,34 @@ type SortMode = "newest" | "date" | "trending";
 type ViewMode = "grid" | "list" | "calendar";
 
 export default function StudentEventsPage() {
+  const [events, setEvents] = useState<Event[]>([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<"all" | Category>("all");
   const [feeFilter, setFeeFilter] = useState<"all" | "free" | "paid">("all");
   const [sort, setSort] = useState<SortMode>("date");
   const [view, setView] = useState<ViewMode>("grid");
   const [bookmarks, setBookmarks] = useState<string[]>([]);
-  const [registrations] = useState<string[]>(["e3"]);
-  const [calMonth] = useState(new Date(2026, 7, 1));
+  const [registrations, setRegistrations] = useState<string[]>([]);
+  const [calMonth] = useState(new Date());
   const [showPast, setShowPast] = useState(false);
 
-  const toggleBookmark = (id: string) =>
-    setBookmarks((prev) => (prev.includes(id) ? prev.filter((b) => b !== id) : [...prev, id]));
+  useEffect(() => {
+    getAdaptedEvents().then(setEvents).catch(console.error);
+    getMyBookmarks().then(setBookmarks).catch(console.error);
+    getMyRegistrations().then((regs) => setRegistrations(regs.map((r) => r.event_id))).catch(console.error);
+  }, []);
 
-  const matchesFilters = (e: typeof MOCK_EVENTS[0]) => {
+  const toggleBookmark = async (id: string) => {
+    if (bookmarks.includes(id)) {
+      setBookmarks((prev) => prev.filter((b) => b !== id));
+      await removeBookmark(id).catch(console.error);
+    } else {
+      setBookmarks((prev) => [...prev, id]);
+      await addBookmark(id).catch(console.error);
+    }
+  };
+
+  const matchesFilters = (e: Event) => {
     const matchSearch =
       e.title.toLowerCase().includes(search.toLowerCase()) ||
       e.tags.some((t) => t.includes(search.toLowerCase())) ||
@@ -34,14 +49,14 @@ export default function StudentEventsPage() {
     return matchSearch && matchCat && matchFee;
   };
 
-  const sortFn = (a: typeof MOCK_EVENTS[0], b: typeof MOCK_EVENTS[0]) => {
+  const sortFn = (a: Event, b: Event) => {
     if (sort === "date") return new Date(a.date).getTime() - new Date(b.date).getTime();
     if (sort === "trending") return b.views - a.views;
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   };
 
-  const upcoming = MOCK_EVENTS.filter((e) => !isEventPast(e) && matchesFilters(e)).sort(sortFn);
-  const past = MOCK_EVENTS.filter((e) => isEventPast(e) && matchesFilters(e))
+  const upcoming = events.filter((e) => !isEventPast(e) && matchesFilters(e)).sort(sortFn);
+  const past = events.filter((e) => isEventPast(e) && matchesFilters(e))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // most recent past first
 
   const allFiltered = [...upcoming, ...past];
@@ -50,7 +65,7 @@ export default function StudentEventsPage() {
   const monthDays = eachDayOfInterval({ start: startOfMonth(calMonth), end: endOfMonth(calMonth) });
   const startDow = startOfMonth(calMonth).getDay();
 
-  const EventGrid = ({ events }: { events: typeof MOCK_EVENTS }) => (
+  const EventGrid = ({ events }: { events: Event[] }) => (
     <div className={view === "grid" ? "grid sm:grid-cols-2 lg:grid-cols-3 gap-5" : "space-y-3"}>
       {events.map((event) => (
         <EventCard

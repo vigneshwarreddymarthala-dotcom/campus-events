@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
@@ -10,13 +10,39 @@ import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, GraduationCap, AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginPageInner />
+    </Suspense>
+  );
+}
+
+function LoginPageInner() {
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const autoAs = searchParams.get("as");
+    if (!autoAs) return;
+    const creds: Record<string, [string, string]> = {
+      admin: ["admin@college.edu", "admin123"],
+      student: ["student@college.edu", "student123"],
+    };
+    const pair = creds[autoAs];
+    if (!pair) return;
+    setLoading(true);
+    login(pair[0], pair[1]).then((r) => {
+      setLoading(false);
+      if (r.success) router.push(searchParams.get("redirect") ?? "/");
+      else setError(r.error ?? "Login failed.");
+    });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,9 +101,29 @@ export default function LoginPage() {
 
           {/* Demo hints */}
           <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-6 text-sm">
-            <p className="font-medium text-indigo-800 mb-1">Demo credentials</p>
-            <p className="text-indigo-700">Admin: <code>admin@college.edu</code> / <code>admin123</code></p>
-            <p className="text-indigo-700 mt-0.5">Student: <code>student@college.edu</code> / <code>student123</code></p>
+            <p className="font-medium text-indigo-800 mb-2">Demo credentials</p>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <p className="text-indigo-700">Admin: <code>admin@college.edu</code> / <code>admin123</code></p>
+                <button
+                  type="button"
+                  onClick={async () => { setLoading(true); setError(""); const r = await login("admin@college.edu", "admin123"); setLoading(false); if (!r.success) setError(r.error ?? "Login failed."); else router.push("/"); }}
+                  className="ml-2 shrink-0 text-xs bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700"
+                >
+                  Use
+                </button>
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-indigo-700">Student: <code>student@college.edu</code> / <code>student123</code></p>
+                <button
+                  type="button"
+                  onClick={async () => { setLoading(true); setError(""); const r = await login("student@college.edu", "student123"); setLoading(false); if (!r.success) setError(r.error ?? "Login failed."); else router.push("/"); }}
+                  className="ml-2 shrink-0 text-xs bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700"
+                >
+                  Use
+                </button>
+              </div>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">

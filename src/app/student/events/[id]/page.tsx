@@ -1,9 +1,10 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import Link from "next/link";
-import { MOCK_EVENTS, CATEGORY_COLORS } from "@/lib/mock-data";
+import { CATEGORY_COLORS, type Event } from "@/lib/mock-data";
 import { useAuth } from "@/contexts/auth-context";
+import { getAdaptedEvent, isRegisteredForEvent, getMyBookmarks, addBookmark, removeBookmark, registerForEvent, cancelRegistration } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -17,12 +18,22 @@ import {
 export default function StudentEventDetailPage({ params }: PageProps<"/student/events/[id]">) {
   const { id } = use(params);
   const { user } = useAuth();
-  const event = MOCK_EVENTS.find((e) => e.id === id);
-
+  const [event, setEvent] = useState<Event | null | undefined>(undefined);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
   const [registering, setRegistering] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [shareMsg, setShareMsg] = useState("");
+
+  useEffect(() => {
+    getAdaptedEvent(id).then(setEvent).catch(() => setEvent(null));
+    isRegisteredForEvent(id).then(setIsRegistered).catch(console.error);
+    getMyBookmarks().then((ids) => setIsBookmarked(ids.includes(id))).catch(console.error);
+  }, [id]);
+
+  if (event === undefined) {
+    return <div className="text-center py-20 text-gray-400">Loading...</div>;
+  }
 
   if (!event) {
     return (
@@ -39,11 +50,37 @@ export default function StudentEventDetailPage({ params }: PageProps<"/student/e
   const isPastDeadline = new Date(event.registrationDeadline) < new Date();
 
   const handleRegister = async () => {
-    if (isRegistered) return;
+    if (isRegistered || !user) return;
     setRegistering(true);
-    await new Promise((r) => setTimeout(r, 1000));
+    try {
+      await registerForEvent(id, {
+        name: user.name,
+        email: user.email,
+        department: user.department,
+        year: user.year,
+        fee: event.registrationFee,
+      });
+      setIsRegistered(true);
+      setShowConfirm(false);
+    } catch (err) {
+      console.error(err);
+    }
     setRegistering(false);
-    setIsRegistered(true);
+  };
+
+  const handleAddToCalendar = () => {
+    const start = new Date(`${event.date}T${event.time}`);
+    const end = event.endDate
+      ? new Date(`${event.endDate}T${event.time}`)
+      : new Date(start.getTime() + 3 * 60 * 60 * 1000);
+    const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").slice(0, 15);
+    const url = new URL("https://www.google.com/calendar/render");
+    url.searchParams.set("action", "TEMPLATE");
+    url.searchParams.set("text", event.title);
+    url.searchParams.set("dates", `${fmt(start)}/${fmt(end)}`);
+    url.searchParams.set("details", event.description);
+    url.searchParams.set("location", event.venue);
+    window.open(url.toString(), "_blank");
   };
 
   const handleShare = () => {
@@ -53,29 +90,46 @@ export default function StudentEventDetailPage({ params }: PageProps<"/student/e
   };
 
   const registrationButton = () => {
-    if (isRegistered) {
+    if (isRegistered) return null;
+    if (isPast) return <Button className="w-full" variant="outline" disabled>Event Ended</Button>;
+    if (isFull) return <Button className="w-full" variant="outline" disabled>Event Full</Button>;
+    if (isPastDeadline) return <Button className="w-full" variant="outline" disabled>Registration Closed</Button>;
+
+    // Paid event with ticket URL — redirect to external purchase link
+    if (event.registrationFee > 0 && event.ticketUrl) {
       return (
-        <Button className="w-full bg-green-600 hover:bg-green-600 cursor-default gap-2" disabled>
-          <CheckCircle2 className="w-4 h-4" /> You&apos;re Registered!
-        </Button>
+        <a href={event.ticketUrl} target="_blank" rel="noopener noreferrer" className="block w-full">
+          <Button className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2">
+            Buy Ticket — ₹{event.registrationFee}
+          </Button>
+        </a>
       );
     }
-    if (isPast) {
-      return <Button className="w-full" variant="outline" disabled>Event Ended</Button>;
+
+    if (showConfirm) {
+      return (
+        <div className="border border-indigo-200 rounded-xl p-4 space-y-3 bg-indigo-50">
+          <p className="text-sm font-semibold text-indigo-900">Confirm your registration</p>
+          <div className="bg-white rounded-lg px-3 py-2.5 text-sm text-gray-900 font-medium border border-gray-200">
+            {user?.name}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => setShowConfirm(false)} disabled={registering}>
+              Cancel
+            </Button>
+            <Button className="flex-1 bg-indigo-600 hover:bg-indigo-700" onClick={handleRegister} disabled={registering}>
+              {registering
+                ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                : "Confirm"}
+            </Button>
+          </div>
+        </div>
+      );
     }
-    if (isFull) {
-      return <Button className="w-full" variant="outline" disabled>Event Full</Button>;
-    }
-    if (isPastDeadline) {
-      return <Button className="w-full" variant="outline" disabled>Registration Closed</Button>;
-    }
+
     return (
-      <Button className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2" onClick={handleRegister} disabled={registering}>
-        {registering ? (
-          <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Registering...</>
-        ) : (
-          event.registrationFee === 0 ? "Register for Free" : `Register — ₹${event.registrationFee}`
-        )}
+      <Button className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2" onClick={() => setShowConfirm(true)}>
+        {event.registrationFee === 0 ? "Register for Free" : `Register — ₹${event.registrationFee}`}
       </Button>
     );
   };
@@ -92,7 +146,13 @@ export default function StudentEventDetailPage({ params }: PageProps<"/student/e
         <div className="lg:col-span-2 space-y-6">
           {/* Banner */}
           <div className="relative rounded-2xl overflow-hidden h-64 sm:h-80 bg-gray-100">
-            <img src={event.bannerImage} alt={event.title} className="w-full h-full object-cover" />
+            {event.bannerLink ? (
+              <a href={event.bannerLink} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                <img src={event.bannerImage} alt={event.title} className="w-full h-full object-cover" />
+              </a>
+            ) : (
+              <img src={event.bannerImage} alt={event.title} className="w-full h-full object-cover" />
+            )}
             <div className="absolute top-4 left-4">
               <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${CATEGORY_COLORS[event.category]}`}>
                 {event.category.replace("-", " ")}
@@ -123,7 +183,15 @@ export default function StudentEventDetailPage({ params }: PageProps<"/student/e
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">{event.title}</h1>
             <div className="flex items-center gap-2 shrink-0">
               <button
-                onClick={() => setIsBookmarked(!isBookmarked)}
+                onClick={async () => {
+                  if (isBookmarked) {
+                    setIsBookmarked(false);
+                    await removeBookmark(id).catch(console.error);
+                  } else {
+                    setIsBookmarked(true);
+                    await addBookmark(id).catch(console.error);
+                  }
+                }}
                 className={`p-2 rounded-xl transition-colors ${isBookmarked ? "bg-indigo-100 text-indigo-600" : "bg-gray-100 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600"}`}
               >
                 {isBookmarked ? <BookmarkCheck className="w-5 h-5" /> : <Bookmark className="w-5 h-5" />}
@@ -241,18 +309,18 @@ export default function StudentEventDetailPage({ params }: PageProps<"/student/e
             </div>
 
             {isRegistered && (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
-                <div className="text-sm">
-                  <p className="font-medium text-green-800">You&apos;re registered!</p>
-                  <p className="text-green-700 mt-0.5">Check your email for confirmation details.</p>
-                </div>
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                <p className="text-sm font-medium text-green-800">You&apos;re registered!</p>
               </div>
             )}
 
             {registrationButton()}
 
-            <button className="w-full py-2 px-4 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors">
+            <button
+              onClick={handleAddToCalendar}
+              className="w-full py-2 px-4 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
+            >
               <Calendar className="w-4 h-4" /> Add to Calendar
             </button>
 

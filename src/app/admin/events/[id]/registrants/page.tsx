@@ -1,41 +1,52 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import Link from "next/link";
-import { MOCK_EVENTS, MOCK_REGISTRANTS } from "@/lib/mock-data";
+import { type Event } from "@/lib/mock-data";
+import { getAdaptedEvent, getEventRegistrations, toggleAttendance, type DbRegistration } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ArrowLeft, Search, Download, CheckCircle2, XCircle, QrCode, Users } from "lucide-react";
 
 export default function RegistrantsPage({ params }: PageProps<"/admin/events/[id]/registrants">) {
   const { id } = use(params);
-  const event = MOCK_EVENTS.find((e) => e.id === id);
-  const registrants = MOCK_REGISTRANTS.filter((r) => r.eventId === id);
+  const [event, setEvent] = useState<Event | null | undefined>(undefined);
+  const [registrants, setRegistrants] = useState<DbRegistration[]>([]);
   const [search, setSearch] = useState("");
-  const [attendance, setAttendance] = useState<Record<string, boolean>>(
-    Object.fromEntries(registrants.map((r) => [r.id, r.attended]))
-  );
+  const [attendance, setAttendance] = useState<Record<string, boolean>>({});
 
-  if (!event) {
-    return <div className="text-center py-20 text-gray-500">Event not found.</div>;
-  }
+  useEffect(() => {
+    getAdaptedEvent(id).then(setEvent).catch(() => setEvent(null));
+    getEventRegistrations(id).then((regs) => {
+      setRegistrants(regs);
+      setAttendance(Object.fromEntries(regs.map((r) => [r.id, r.attended])));
+    }).catch(console.error);
+  }, [id]);
+
+  if (event === undefined) return <div className="text-center py-20 text-gray-400">Loading...</div>;
+  if (!event) return <div className="text-center py-20 text-gray-500">Event not found.</div>;
 
   const filtered = registrants.filter(
     (r) =>
-      r.name.toLowerCase().includes(search.toLowerCase()) ||
-      r.email.toLowerCase().includes(search.toLowerCase()) ||
-      r.department.toLowerCase().includes(search.toLowerCase())
+      r.student_name.toLowerCase().includes(search.toLowerCase()) ||
+      r.student_email.toLowerCase().includes(search.toLowerCase()) ||
+      (r.student_department ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
   const attendedCount = Object.values(attendance).filter(Boolean).length;
 
+  const handleToggleAttendance = async (regId: string) => {
+    const newVal = !attendance[regId];
+    setAttendance((prev) => ({ ...prev, [regId]: newVal }));
+    await toggleAttendance(regId, newVal).catch(console.error);
+  };
+
   const exportCSV = () => {
-    const headers = ["Name", "Email", "Phone", "Year", "Department", "Registered At", "Attended"];
+    const headers = ["Name", "Email", "Year", "Department", "Payment", "Registered At", "Attended"];
     const rows = registrants.map((r) => [
-      r.name, r.email, r.phone, r.year, r.department,
-      format(new Date(r.registeredAt), "yyyy-MM-dd HH:mm"),
+      r.student_name, r.student_email, r.student_year ?? "", r.student_department ?? "",
+      r.payment_status, format(new Date(r.registered_at), "yyyy-MM-dd HH:mm"),
       attendance[r.id] ? "Yes" : "No",
     ]);
     const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
@@ -108,7 +119,7 @@ export default function RegistrantsPage({ params }: PageProps<"/admin/events/[id
           <table className="w-full text-sm min-w-[700px]">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                {["#", "Name", "Email", "Phone", "Year", "Dept.", "Registered", "Attended"].map((h) => (
+                {["#", "Name", "Email", "Year", "Dept.", "Registered", "Attended"].map((h) => (
                   <th key={h} className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -116,7 +127,9 @@ export default function RegistrantsPage({ params }: PageProps<"/admin/events/[id
             <tbody className="divide-y divide-gray-100">
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-gray-400">No registrants found.</td>
+                  <td colSpan={7} className="px-4 py-10 text-center text-gray-400">
+                    {registrants.length === 0 ? "No registrations yet." : "No results found."}
+                  </td>
                 </tr>
               )}
               {filtered.map((r, i) => (
@@ -125,21 +138,20 @@ export default function RegistrantsPage({ params }: PageProps<"/admin/events/[id
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-semibold text-xs shrink-0">
-                        {r.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+                        {r.student_name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
                       </div>
-                      <span className="font-medium text-gray-900">{r.name}</span>
+                      <span className="font-medium text-gray-900">{r.student_name}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-500">{r.email}</td>
-                  <td className="px-4 py-3 text-gray-500">{r.phone}</td>
-                  <td className="px-4 py-3 text-gray-500">{r.year}</td>
-                  <td className="px-4 py-3 text-gray-500">{r.department}</td>
+                  <td className="px-4 py-3 text-gray-500">{r.student_email}</td>
+                  <td className="px-4 py-3 text-gray-500">{r.student_year ?? "—"}</td>
+                  <td className="px-4 py-3 text-gray-500">{r.student_department ?? "—"}</td>
                   <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
-                    {format(new Date(r.registeredAt), "MMM d, HH:mm")}
+                    {format(new Date(r.registered_at), "MMM d, HH:mm")}
                   </td>
                   <td className="px-4 py-3">
                     <button
-                      onClick={() => setAttendance((prev) => ({ ...prev, [r.id]: !prev[r.id] }))}
+                      onClick={() => handleToggleAttendance(r.id)}
                       className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full transition-colors ${
                         attendance[r.id]
                           ? "bg-green-100 text-green-700 hover:bg-green-200"
@@ -158,12 +170,6 @@ export default function RegistrantsPage({ params }: PageProps<"/admin/events/[id
             </tbody>
           </table>
         </div>
-        {registrants.length === 0 && (
-          <div className="py-16 text-center">
-            <Users className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">No registrations yet for this event.</p>
-          </div>
-        )}
       </div>
     </div>
   );

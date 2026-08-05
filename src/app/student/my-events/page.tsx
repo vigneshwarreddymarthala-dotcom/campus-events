@@ -1,26 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { MOCK_EVENTS, isEventPast } from "@/lib/mock-data";
+import { isEventPast, type Event } from "@/lib/mock-data";
 import EventCard from "@/components/shared/EventCard";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Calendar, Bookmark, History, CalendarCheck } from "lucide-react";
+import {
+  getAdaptedEvents, getMyBookmarks, getMyRegistrations,
+  addBookmark, removeBookmark,
+} from "@/lib/db";
 
 export default function MyEventsPage() {
-  const [bookmarks, setBookmarks] = useState<string[]>(["e2", "e6"]);
-  // Simulated: student registered for e1 + e3 (upcoming), plus attended e7/e9/e10 (past)
-  const registeredIds = ["e1", "e3"];
-  const attendedIds = ["e7", "e9", "e10"];
+  const [allEvents, setAllEvents] = useState<Event[]>([]);
+  const [bookmarks, setBookmarks] = useState<string[]>([]);
+  const [registeredIds, setRegisteredIds] = useState<string[]>([]);
+  const [attendedIds, setAttendedIds] = useState<string[]>([]);
 
-  const toggleBookmark = (id: string) =>
-    setBookmarks((prev) => (prev.includes(id) ? prev.filter((b) => b !== id) : [...prev, id]));
+  useEffect(() => {
+    getAdaptedEvents().then(setAllEvents).catch(console.error);
+    getMyBookmarks().then(setBookmarks).catch(console.error);
+    getMyRegistrations().then((regs) => {
+      setRegisteredIds(regs.map((r) => r.event_id));
+      setAttendedIds(regs.filter((r) => r.attended).map((r) => r.event_id));
+    }).catch(console.error);
+  }, []);
 
-  // upcoming registered (not past)
-  const registeredEvents = MOCK_EVENTS.filter((e) => registeredIds.includes(e.id) && !isEventPast(e));
-  const bookmarkedEvents = MOCK_EVENTS.filter((e) => bookmarks.includes(e.id));
-  // history = all past events the student attended
-  const attendedEvents = MOCK_EVENTS.filter((e) => attendedIds.includes(e.id))
+  const toggleBookmark = async (id: string) => {
+    if (bookmarks.includes(id)) {
+      setBookmarks((prev) => prev.filter((b) => b !== id));
+      await removeBookmark(id).catch(console.error);
+    } else {
+      setBookmarks((prev) => [...prev, id]);
+      await addBookmark(id).catch(console.error);
+    }
+  };
+
+  const registeredEvents = allEvents.filter((e) => registeredIds.includes(e.id) && !isEventPast(e));
+  const bookmarkedEvents = allEvents.filter((e) => bookmarks.includes(e.id));
+  const attendedEvents = allEvents
+    .filter((e) => attendedIds.includes(e.id))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
@@ -98,7 +117,7 @@ export default function MyEventsPage() {
             <EmptyState
               icon={<Bookmark className="w-12 h-12 text-gray-300" />}
               title="No saved events"
-              description="Bookmark events you're interested in to find them quickly later."
+              description="Bookmark events you&apos;re interested in to find them quickly later."
               linkHref="/student/events"
               linkLabel="Browse Events"
             />
@@ -146,18 +165,8 @@ export default function MyEventsPage() {
   );
 }
 
-function EmptyState({
-  icon,
-  title,
-  description,
-  linkHref,
-  linkLabel,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  linkHref: string;
-  linkLabel: string;
+function EmptyState({ icon, title, description, linkHref, linkLabel }: {
+  icon: React.ReactNode; title: string; description: string; linkHref: string; linkLabel: string;
 }) {
   return (
     <div className="text-center py-16">

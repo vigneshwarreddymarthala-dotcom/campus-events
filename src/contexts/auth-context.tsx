@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 
 export type UserRole = "admin" | "student";
 
@@ -34,78 +35,79 @@ type RegisterData = {
   phone?: string;
 };
 
-const MOCK_USERS: (User & { password: string })[] = [
-  {
-    id: "u1",
-    name: "Dr. Rajesh Kumar",
-    email: "admin@college.edu",
-    password: "admin123",
-    role: "admin",
-    avatar: "",
-    department: "Computer Science",
-  },
-  {
-    id: "u2",
-    name: "Priya Menon",
-    email: "student@college.edu",
-    password: "student123",
-    role: "student",
-    avatar: "",
-    department: "Computer Science",
-    year: "3rd Year",
-    phone: "9876543210",
-  },
-];
-
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const supabase = createClient();
+
+  async function loadProfile(userId: string): Promise<User | null> {
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+    if (!data) return null;
+    return {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      role: data.role as UserRole,
+      department: data.department ?? undefined,
+      year: data.year ?? undefined,
+    };
+  }
 
   useEffect(() => {
-    const stored = localStorage.getItem("campus_user");
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored));
-      } catch {}
-    }
-    setIsLoading(false);
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const profile = await loadProfile(session.user.id);
+        setUser(profile);
+      }
+      setIsLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        const profile = await loadProfile(session.user.id);
+        setUser(profile);
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = async (email: string, password: string) => {
-    await new Promise((r) => setTimeout(r, 800));
-    const found = MOCK_USERS.find((u) => u.email === email && u.password === password);
-    if (!found) return { success: false, error: "Invalid email or password." };
-    const { password: _, ...safeUser } = found;
-    setUser(safeUser);
-    localStorage.setItem("campus_user", JSON.stringify(safeUser));
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { success: false, error: error.message };
     return { success: true };
   };
 
   const register = async (data: RegisterData) => {
-    await new Promise((r) => setTimeout(r, 800));
-    const exists = MOCK_USERS.find((u) => u.email === data.email);
-    if (exists) return { success: false, error: "An account with this email already exists." };
-    const newUser: User = {
-      id: `u${Date.now()}`,
-      name: data.name,
+    const { error } = await supabase.auth.signUp({
       email: data.email,
-      role: data.role,
-      department: data.department,
-      year: data.year,
-      phone: data.phone,
-    };
-    MOCK_USERS.push({ ...newUser, password: data.password });
-    setUser(newUser);
-    localStorage.setItem("campus_user", JSON.stringify(newUser));
+      password: data.password,
+      options: {
+        data: {
+          name: data.name,
+          role: data.role,
+          department: data.department ?? null,
+          year: data.year ?? null,
+        },
+      },
+    });
+    if (error) return { success: false, error: error.message };
     return { success: true };
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem("campus_user");
     router.push("/login");
   };
 
