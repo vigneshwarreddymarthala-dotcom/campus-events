@@ -226,22 +226,9 @@ export async function toggleAttendance(registrationId: string, attended: boolean
 
 export async function markMyAttendance(eventId: string): Promise<"ok" | "not_registered" | "already_marked"> {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
-  const { data: reg } = await supabase
-    .from("registrations")
-    .select("id, attended")
-    .eq("event_id", eventId)
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (!reg) return "not_registered";
-  if (reg.attended) return "already_marked";
-  const { error } = await supabase
-    .from("registrations")
-    .update({ attended: true })
-    .eq("id", reg.id);
+  const { data, error } = await supabase.rpc("mark_attendance", { p_event_id: eventId });
   if (error) throw error;
-  return "ok";
+  return data as "ok" | "not_registered" | "already_marked";
 }
 
 // ── Bookmarks ─────────────────────────────────────────────────
