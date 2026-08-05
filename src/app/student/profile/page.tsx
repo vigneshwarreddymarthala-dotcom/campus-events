@@ -234,10 +234,14 @@ export default function StudentProfilePage() {
       </div>
 
       {/* Sign out */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-4">
+      <div className="bg-white rounded-2xl border border-gray-200 p-5 flex items-center justify-between">
+        <div>
+          <p className="text-sm font-semibold text-gray-900">Sign Out</p>
+          <p className="text-xs text-gray-400 mt-0.5">You will be returned to the login screen</p>
+        </div>
         <button
           onClick={logout}
-          className="flex items-center gap-2 text-red-600 hover:text-red-800 text-sm font-medium transition-colors"
+          className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 hover:bg-red-600 hover:text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
         >
           <LogOut className="w-4 h-4" /> Sign Out
         </button>
