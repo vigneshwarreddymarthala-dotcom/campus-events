@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import {
   DropdownMenu,
@@ -13,14 +12,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { GraduationCap, LogOut, User, Settings, Menu, X } from "lucide-react";
+import { GraduationCap, LogOut, User } from "lucide-react";
 
-type NavLink = { href: string; label: string };
+type NavLink = { href: string; label: string; mobileLabel?: string };
 
 export default function TopNav({ links }: { links: NavLink[] }) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const router = useRouter();
+  const profilePath = user?.role === "admin" ? "/admin/profile" : "/student/profile";
 
   const initials = user?.name
     .split(" ")
@@ -31,35 +31,35 @@ export default function TopNav({ links }: { links: NavLink[] }) {
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center h-14 sm:h-16 gap-3 sm:gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center h-14 sm:h-16 gap-2 sm:gap-6">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 shrink-0" onClick={() => setMobileOpen(false)}>
+        <Link href="/" className="flex items-center gap-2 shrink-0">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
             <GraduationCap className="w-4 h-4 text-white" />
           </div>
           <span className="font-bold text-gray-900 text-sm hidden sm:block">CampusEvents</span>
         </Link>
 
-        {/* Desktop nav links */}
-        <nav className="hidden sm:flex items-center gap-1 flex-1">
+        {/* Nav links — visible on all screen sizes */}
+        <nav className="flex items-center gap-1 flex-1">
           {links.map((link) => {
             const active = pathname === link.href || pathname.startsWith(link.href + "/");
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  active ? "bg-indigo-50 text-indigo-700" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
+                  active
+                    ? "bg-indigo-50 text-indigo-700"
+                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                 }`}
               >
-                {link.label}
+                <span className="sm:hidden">{link.mobileLabel ?? link.label}</span>
+                <span className="hidden sm:inline">{link.label}</span>
               </Link>
             );
           })}
         </nav>
-
-        {/* Mobile: push user menu + hamburger to right */}
-        <div className="flex-1 sm:hidden" />
 
         {/* User menu */}
         <DropdownMenu>
@@ -83,11 +83,8 @@ export default function TopNav({ links }: { links: NavLink[] }) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push(profilePath)}>
               <User className="w-4 h-4 mr-2" /> Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="w-4 h-4 mr-2" /> Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout} className="text-red-600 focus:text-red-600">
@@ -95,37 +92,7 @@ export default function TopNav({ links }: { links: NavLink[] }) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
-        {/* Hamburger (mobile only) */}
-        <button
-          className="sm:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Toggle menu"
-        >
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
       </div>
-
-      {/* Mobile nav dropdown */}
-      {mobileOpen && (
-        <div className="sm:hidden border-t border-gray-200 bg-white px-4 py-3 space-y-1">
-          {links.map((link) => {
-            const active = pathname === link.href || pathname.startsWith(link.href + "/");
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileOpen(false)}
-                className={`block px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                  active ? "bg-indigo-50 text-indigo-700" : "text-gray-600 hover:bg-gray-100"
-                }`}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-        </div>
-      )}
     </header>
   );
 }
