@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CATEGORY_COLORS, type Event } from "@/lib/mock-data";
 import { useAuth } from "@/contexts/auth-context";
-import { getAdaptedEvent, isRegisteredForEvent, getMyBookmarks, addBookmark, removeBookmark, registerForEvent, cancelRegistration } from "@/lib/db";
+import { getAdaptedEvent, isRegisteredForEvent, getMyBookmarks, addBookmark, removeBookmark, registerForEvent, cancelRegistration, getMyEventSurvey } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -13,7 +13,7 @@ import { isEventPast } from "@/lib/mock-data";
 import {
   ArrowLeft, Calendar, MapPin, Users, Clock, Mail,
   Bookmark, BookmarkCheck, Share2, ExternalLink, CheckCircle2,
-  AlertCircle, FileText, Tag, History,
+  AlertCircle, FileText, Tag, History, Star,
 } from "lucide-react";
 
 export default function StudentEventDetailPage({ params }: PageProps<"/student/events/[id]">) {
@@ -33,6 +33,7 @@ function StudentEventDetailPageInner({ params }: { params: PageProps<"/student/e
   const [event, setEvent] = useState<Event | null | undefined>(undefined);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
+  const [surveySubmitted, setSurveySubmitted] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [shareMsg, setShareMsg] = useState("");
@@ -41,6 +42,7 @@ function StudentEventDetailPageInner({ params }: { params: PageProps<"/student/e
     getAdaptedEvent(id).then(setEvent).catch(() => setEvent(null));
     isRegisteredForEvent(id).then(setIsRegistered).catch(console.error);
     getMyBookmarks().then((ids) => setIsBookmarked(ids.includes(id))).catch(console.error);
+    getMyEventSurvey(id).then((s) => setSurveySubmitted(!!s)).catch(console.error);
   }, [id]);
 
   if (event === undefined) {
@@ -325,6 +327,23 @@ function StudentEventDetailPageInner({ params }: { params: PageProps<"/student/e
                 <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
                 <p className="text-sm font-medium text-green-800">You&apos;re registered!</p>
               </div>
+            )}
+
+            {/* Survey button — only for past events the student registered for */}
+            {isPast && isRegistered && (
+              surveySubmitted ? (
+                <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-2.5">
+                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-400 shrink-0" />
+                  <p className="text-sm font-medium text-yellow-800">Feedback submitted — thank you!</p>
+                </div>
+              ) : (
+                <Link
+                  href={`/student/events/${id}/survey`}
+                  className="w-full flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-semibold py-2.5 px-4 rounded-xl text-sm transition-colors"
+                >
+                  <Star className="w-4 h-4" /> Fill Feedback Survey
+                </Link>
+              )
             )}
 
             {registrationButton()}

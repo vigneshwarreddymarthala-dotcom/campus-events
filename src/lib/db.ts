@@ -258,6 +258,77 @@ export async function removeBookmark(eventId: string): Promise<void> {
   if (error) throw error;
 }
 
+// ── Surveys ───────────────────────────────────────────────────
+
+export type DbSurvey = {
+  id: string;
+  event_id: string;
+  user_id: string;
+  student_name: string;
+  student_email: string;
+  rating: number;
+  organization_rating: number;
+  would_recommend: boolean;
+  liked_most: string | null;
+  could_improve: string | null;
+  other_feedback: string | null;
+  submitted_at: string;
+};
+
+export async function submitSurvey(
+  eventId: string,
+  data: {
+    rating: number;
+    organization_rating: number;
+    would_recommend: boolean;
+    liked_most?: string;
+    could_improve?: string;
+    other_feedback?: string;
+  }
+): Promise<void> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+  const { data: profile } = await supabase.from("profiles").select("name, email").eq("id", user.id).single();
+  const { error } = await supabase.from("event_surveys").insert({
+    event_id: eventId,
+    user_id: user.id,
+    student_name: profile?.name ?? user.email ?? "",
+    student_email: profile?.email ?? user.email ?? "",
+    rating: data.rating,
+    organization_rating: data.organization_rating,
+    would_recommend: data.would_recommend,
+    liked_most: data.liked_most || null,
+    could_improve: data.could_improve || null,
+    other_feedback: data.other_feedback || null,
+  });
+  if (error) throw error;
+}
+
+export async function getMyEventSurvey(eventId: string): Promise<DbSurvey | null> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data } = await supabase
+    .from("event_surveys")
+    .select("*")
+    .eq("event_id", eventId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  return data ?? null;
+}
+
+export async function getEventSurveys(eventId: string): Promise<DbSurvey[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("event_surveys")
+    .select("*")
+    .eq("event_id", eventId)
+    .order("submitted_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
 // ── Notifications ─────────────────────────────────────────────
 
 export type DbNotification = {

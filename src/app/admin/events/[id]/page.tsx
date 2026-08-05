@@ -6,7 +6,7 @@ import Link from "next/link";
 import { type Event } from "@/lib/mock-data";
 import { getAdaptedEvent, updateEvent } from "@/lib/db";
 import EventForm from "@/components/shared/EventForm";
-import { ArrowLeft, Users } from "lucide-react";
+import { ArrowLeft, Users, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function EditEventPage({ params }: PageProps<"/admin/events/[id]">) {
@@ -72,13 +72,21 @@ export default function EditEventPage({ params }: PageProps<"/admin/events/[id]"
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Edit Event</h1>
           <p className="text-gray-500 text-sm mt-1 truncate max-w-[200px] sm:max-w-none">{event.title}</p>
         </div>
-        <Link href={`/admin/events/${id}/registrants`} className="shrink-0">
-          <Button variant="outline" className="gap-1.5 px-2.5 sm:px-4">
-            <Users className="w-4 h-4" />
-            <span className="hidden sm:inline">View Registrants ({event.registrations})</span>
-            <span className="sm:hidden">{event.registrations}</span>
-          </Button>
-        </Link>
+        <div className="flex gap-2 shrink-0">
+          <Link href={`/admin/events/${id}/surveys`}>
+            <Button variant="outline" className="gap-1.5 px-2.5 sm:px-4">
+              <Star className="w-4 h-4" />
+              <span className="hidden sm:inline">Surveys</span>
+            </Button>
+          </Link>
+          <Link href={`/admin/events/${id}/registrants`}>
+            <Button variant="outline" className="gap-1.5 px-2.5 sm:px-4">
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">Registrants ({event.registrations})</span>
+              <span className="sm:hidden">{event.registrations}</span>
+            </Button>
+          </Link>
+        </div>
       </div>
       <EventForm
         initial={event}
