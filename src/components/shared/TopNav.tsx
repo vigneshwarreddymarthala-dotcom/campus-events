@@ -1,26 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { GraduationCap, LogOut, User } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 import NotificationBell from "@/components/shared/NotificationBell";
 
 type NavLink = { href: string; label: string; mobileLabel?: string };
 
 export default function TopNav({ links }: { links: NavLink[] }) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const pathname = usePathname();
-  const router = useRouter();
   const profilePath = user?.role === "admin" ? "/admin/profile" : "/student/profile";
 
   const initials = user?.name
@@ -41,7 +32,7 @@ export default function TopNav({ links }: { links: NavLink[] }) {
           <span className="font-bold text-gray-900 text-sm hidden sm:block">CampusEvents</span>
         </Link>
 
-        {/* Nav links — visible on all screen sizes */}
+        {/* Nav links */}
         <nav className="flex items-center gap-1 flex-1">
           {links.map((link) => {
             const active = pathname === link.href || (link.href !== "/admin" && pathname.startsWith(link.href + "/"));
@@ -65,37 +56,20 @@ export default function TopNav({ links }: { links: NavLink[] }) {
         {/* Notification bell — students only */}
         {user?.role === "student" && <NotificationBell />}
 
-        {/* User menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger>
-            <div className="flex items-center gap-2 px-1.5 py-1 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xs font-semibold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-sm font-medium text-gray-700 hidden sm:block max-w-[130px] truncate">
-                {user?.name}
-              </span>
-            </div>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52">
-            <DropdownMenuLabel>
-              <div className="flex flex-col">
-                <span className="font-medium">{user?.name}</span>
-                <span className="text-xs text-gray-400 font-normal">{user?.email}</span>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push(profilePath)}>
-              <User className="w-4 h-4 mr-2" /> Profile
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout} className="text-red-600 focus:text-red-600">
-              <LogOut className="w-4 h-4 mr-2" /> Sign Out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Avatar — links to profile page */}
+        <Link
+          href={profilePath}
+          className="flex items-center gap-2 px-1.5 py-1 rounded-lg hover:bg-gray-100 transition-colors shrink-0"
+        >
+          <Avatar className="h-8 w-8">
+            <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xs font-semibold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <span className="text-sm font-medium text-gray-700 hidden sm:block max-w-[130px] truncate">
+            {user?.name}
+          </span>
+        </Link>
       </div>
     </header>
   );
