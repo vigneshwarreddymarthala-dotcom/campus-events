@@ -44,7 +44,7 @@ export default function TopNav({ links }: { links: NavLink[] }) {
         {/* Nav links — visible on all screen sizes */}
         <nav className="flex items-center gap-1 flex-1">
           {links.map((link) => {
-            const active = pathname === link.href || pathname.startsWith(link.href + "/");
+            const active = pathname === link.href || (link.href !== "/admin" && pathname.startsWith(link.href + "/"));
             return (
               <Link
                 key={link.href}

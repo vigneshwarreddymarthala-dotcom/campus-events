@@ -10,6 +10,7 @@ const ADMIN_LINKS = [
   { href: "/admin/events", label: "Events" },
   { href: "/admin/students", label: "Students" },
   { href: "/admin/notifications", label: "Notify", mobileLabel: "Notify" },
+  { href: "/admin/profile", label: "Profile", mobileLabel: "Profile" },
 ];
 
 export default function AdminLayout({ children }: LayoutProps<"/admin">) {
