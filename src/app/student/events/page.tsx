@@ -5,9 +5,9 @@ import { CATEGORIES, Category, isEventPast, type Event } from "@/lib/mock-data";
 import { getAdaptedEvents, getMyBookmarks, getMyRegistrations, addBookmark, removeBookmark } from "@/lib/db";
 import EventCard from "@/components/shared/EventCard";
 import { Input } from "@/components/ui/input";
-import { Search, LayoutGrid, List, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, LayoutGrid, List, SlidersHorizontal, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO, addMonths, subMonths } from "date-fns";
 
 type SortMode = "newest" | "date" | "trending";
 type ViewMode = "grid" | "list" | "calendar";
@@ -31,7 +31,7 @@ function StudentEventsPageInner() {
   const [view, setView] = useState<ViewMode>((searchParams.get("view") as ViewMode) || "grid");
   const [bookmarks, setBookmarks] = useState<string[]>([]);
   const [registrations, setRegistrations] = useState<string[]>([]);
-  const [calMonth] = useState(new Date());
+  const [calMonth, setCalMonth] = useState(new Date());
   const [showPast, setShowPast] = useState(false);
 
   const setViewAndUrl = (v: ViewMode) => {
@@ -199,7 +199,29 @@ function StudentEventsPageInner() {
       {/* Calendar view */}
       {view === "calendar" && (
         <div className="bg-white rounded-2xl border border-gray-200 p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">{format(calMonth, "MMMM yyyy")}</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-gray-900">{format(calMonth, "MMMM yyyy")}</h2>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCalMonth((m) => subMonths(m, 1))}
+                className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setCalMonth(new Date())}
+                className="px-2.5 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+              >
+                Today
+              </button>
+              <button
+                onClick={() => setCalMonth((m) => addMonths(m, 1))}
+                className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
           <div className="grid grid-cols-7 gap-1 mb-2">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
               <div key={d} className="text-center text-xs font-medium text-gray-400 py-2">{d}</div>
