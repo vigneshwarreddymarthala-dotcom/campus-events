@@ -3,15 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
-import TopNav from "@/components/shared/TopNav";
-
-const ADMIN_LINKS = [
-  { href: "/admin", label: "Dashboard" },
-  { href: "/admin/events", label: "Events" },
-  { href: "/admin/students", label: "Students" },
-  { href: "/admin/notifications", label: "Notify", mobileLabel: "Notify" },
-  { href: "/admin/profile", label: "Profile", mobileLabel: "Profile" },
-];
+import AdminSidebar from "@/components/shared/AdminSidebar";
 
 export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   const { user, isLoading } = useAuth();
@@ -32,9 +24,11 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <TopNav links={ADMIN_LINKS} />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">{children}</main>
+    <div className="min-h-screen bg-gray-50 lg:flex">
+      <AdminSidebar />
+      <div className="flex-1 min-w-0">
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">{children}</main>
+      </div>
     </div>
   );
 }
