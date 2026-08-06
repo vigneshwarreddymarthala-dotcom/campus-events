@@ -7,10 +7,10 @@ import { getAdaptedEvents, getEventRegistrations, getEventSurveys, type DbRegist
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { format } from "date-fns";
+import { format, isToday } from "date-fns";
 import {
   CalendarDays, Users, TrendingUp, Plus, ArrowRight,
-  Clock, Star, CheckCircle2, BarChart2,
+  Clock, Star, CheckCircle2, BarChart2, Zap,
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -74,6 +74,7 @@ export default function AdminDashboard() {
   const upcomingEvents = events.filter((e) => !isEventPast(e))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 4);
+  const todaysEvents = events.filter((e) => isToday(new Date(e.date)));
   const maxCat = categoryStats[0]?.count || 1;
 
   return (
@@ -93,6 +94,34 @@ export default function AdminDashboard() {
           </Button>
         </Link>
       </div>
+
+      {/* Today's Focus */}
+      {todaysEvents.length > 0 && (
+        <div className="bg-indigo-600 rounded-2xl p-4 sm:p-5 text-white">
+          <div className="flex items-center gap-2 mb-3">
+            <Zap className="w-4 h-4 text-indigo-200" />
+            <span className="text-sm font-semibold text-indigo-100">Today&apos;s Focus</span>
+            <span className="ml-auto text-xs bg-white/20 px-2 py-0.5 rounded-full font-medium">{todaysEvents.length} event{todaysEvents.length > 1 ? "s" : ""}</span>
+          </div>
+          <div className="space-y-2">
+            {todaysEvents.map((e) => (
+              <Link key={e.id} href={`/admin/events/${e.id}`}>
+                <div className="flex items-center gap-3 bg-white/10 hover:bg-white/20 transition-colors rounded-xl p-3">
+                  <img src={e.bannerImage} alt={e.title} className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{e.title}</p>
+                    <p className="text-xs text-indigo-200">{e.time} · {e.venue}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs text-indigo-200">{e.registrations}/{e.capacity}</p>
+                    <p className="text-xs text-indigo-300">registered</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">

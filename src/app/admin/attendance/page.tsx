@@ -51,7 +51,7 @@ export default function AttendancePage() {
   const totalRegs = summaries.reduce((s, x) => s + x.regs.length, 0);
   const totalAttended = summaries.reduce((s, x) => s + x.attended, 0);
   const overallRate = totalRegs > 0 ? Math.round((totalAttended / totalRegs) * 100) : 0;
-  const pastWithRegs = summaries.filter((s) => isEventPast(s.event) && s.regs.length > 0);
+  const pastWithRegs = summaries.filter((s) => s.regs.length > 0);
 
   const filtered = summaries.filter((s) => {
     const matchSearch = s.event.title.toLowerCase().includes(search.toLowerCase());
@@ -83,7 +83,7 @@ export default function AttendancePage() {
           { label: "Total Registrations", value: totalRegs, icon: Users, color: "text-indigo-600", bg: "bg-indigo-50" },
           { label: "Total Attended", value: totalAttended, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50" },
           { label: "Overall Rate", value: `${overallRate}%`, icon: TrendingUp, color: "text-blue-600", bg: "bg-blue-50" },
-          { label: "Events Tracked", value: pastWithRegs.length, icon: CalendarDays, color: "text-purple-600", bg: "bg-purple-50" },
+          { label: "Events with Reg.", value: pastWithRegs.length, icon: CalendarDays, color: "text-purple-600", bg: "bg-purple-50" },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-3 shadow-sm">
             <div className={`w-9 h-9 ${s.bg} rounded-xl flex items-center justify-center shrink-0`}>

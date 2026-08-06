@@ -113,8 +113,7 @@ export default function EventCard({
           <img
             src={event.bannerImage}
             alt={event.title}
-            className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
-            style={{ transform: undefined }}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
 
           {/* dim overlay for past events */}
