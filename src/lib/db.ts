@@ -510,3 +510,17 @@ export async function getStudentProfile(userId: string): Promise<DbProfile | nul
   if (error) return null;
   return data;
 }
+
+export async function cloneEvent(id: string): Promise<string> {
+  const supabase = createClient();
+  const { data: ev, error } = await supabase.from("events").select("*").eq("id", id).single();
+  if (error || !ev) throw error ?? new Error("Event not found");
+  const { id: _id, created_at, updated_at, ...rest } = ev;
+  const { data, error: insertErr } = await supabase
+    .from("events")
+    .insert({ ...rest, title: `Copy of ${ev.title}`, status: "upcoming" })
+    .select("id")
+    .single();
+  if (insertErr) throw insertErr;
+  return data.id;
+}

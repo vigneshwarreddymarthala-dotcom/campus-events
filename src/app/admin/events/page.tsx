@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CATEGORY_COLORS, CATEGORIES, isEventPast, type Event } from "@/lib/mock-data";
-import { getAdaptedEvents, deleteEvent } from "@/lib/db";
+import { getAdaptedEvents, deleteEvent, cloneEvent } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
-import { Plus, Search, Users, Eye, Edit, Trash2, Calendar } from "lucide-react";
+import { Plus, Search, Users, Eye, Edit, Trash2, Calendar, Copy } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
   upcoming: "bg-blue-100 text-blue-700",
@@ -18,6 +19,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function AdminEventsPage() {
+  const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -48,6 +50,11 @@ export default function AdminEventsPage() {
     if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
     await deleteEvent(id).catch(console.error);
     setEvents((prev) => prev.filter((e) => e.id !== id));
+  };
+
+  const handleClone = async (id: string) => {
+    const newId = await cloneEvent(id).catch(console.error);
+    if (newId) router.push(`/admin/events/${newId}`);
   };
 
   const upcomingCount = events.filter((e) => !isEventPast(e)).length;
@@ -163,6 +170,13 @@ export default function AdminEventsPage() {
                             <Eye className="w-4 h-4" />
                           </button>
                         </Link>
+                        <button
+                          onClick={() => handleClone(event.id)}
+                          className="p-1.5 rounded-lg hover:bg-purple-50 text-gray-400 hover:text-purple-600 transition-colors"
+                          title="Clone Event"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
                         <Link href={`/admin/events/${event.id}`}>
                           <button className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors" title="Edit">
                             <Edit className="w-4 h-4" />

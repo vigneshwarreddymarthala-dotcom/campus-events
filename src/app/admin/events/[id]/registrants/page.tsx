@@ -7,7 +7,7 @@ import { getAdaptedEvent, getEventRegistrations, toggleAttendance, type DbRegist
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
-import { ArrowLeft, Search, Download, CheckCircle2, XCircle, QrCode, Users, Bell, X } from "lucide-react";
+import { ArrowLeft, Search, Download, CheckCircle2, XCircle, QrCode, Users, Bell, X, Award } from "lucide-react";
 import NotificationModal from "@/components/shared/NotificationModal";
 import QRCode from "react-qr-code";
 
@@ -76,6 +76,27 @@ export default function RegistrantsPage({ params }: PageProps<"/admin/events/[id
     });
   };
 
+  const printBulkCertificates = () => {
+    const attended = registrants.filter((r) => r.attended);
+    if (attended.length === 0) { alert("No attended students to generate certificates for."); return; }
+    const win = window.open("", "_blank");
+    if (!win) return;
+    const eventTitle = event?.title ?? "";
+    const certsHtml = attended.map((r, i) => `
+      <div style="page-break-after:${i < attended.length - 1 ? "always" : "auto"};padding:60px;text-align:center;border:8px double #f59e0b;margin:20px;border-radius:16px;font-family:Georgia,serif;">
+        <div style="font-size:14px;color:#6b7280;letter-spacing:4px;text-transform:uppercase;margin-bottom:24px;">CampusEvents</div>
+        <div style="font-size:13px;color:#374151;margin-bottom:32px;">This is to certify that</div>
+        <div style="font-size:32px;font-weight:bold;color:#1f2937;border-bottom:2px solid #e5e7eb;padding-bottom:12px;margin-bottom:12px;">${r.student_name}</div>
+        <div style="font-size:13px;color:#6b7280;margin-bottom:32px;">${r.student_department ?? ""}${r.student_year ? " · " + r.student_year : ""}</div>
+        <div style="font-size:14px;color:#374151;margin-bottom:8px;">has successfully participated in</div>
+        <div style="font-size:22px;font-weight:bold;color:#4f46e5;margin-bottom:32px;">${eventTitle}</div>
+        <div style="font-size:13px;color:#6b7280;">Issued on ${new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</div>
+      </div>
+    `).join("");
+    win.document.write(`<html><head><title>Certificates — ${eventTitle}</title><style>@media print{.no-print{display:none}body{margin:0}}</style></head><body>${certsHtml}<div class="no-print" style="text-align:center;padding:20px"><button onclick="window.print()" style="background:#4f46e5;color:white;border:none;padding:12px 32px;border-radius:8px;font-size:16px;cursor:pointer">Print All ${attended.length} Certificates</button></div></body></html>`);
+    win.document.close();
+  };
+
   const exportCSV = () => {
     const headers = ["Name", "Email", "Year", "Department", "Payment", "Registered At", "Attended"];
     const rows = registrants.map((r) => [
@@ -130,6 +151,10 @@ export default function RegistrantsPage({ params }: PageProps<"/admin/events/[id
             <Button variant="outline" className="gap-2 text-sm px-2 sm:px-4" onClick={exportCSV}>
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Export CSV</span>
+            </Button>
+            <Button variant="outline" className="gap-2 text-sm px-2 sm:px-4" onClick={printBulkCertificates}>
+              <Award className="w-4 h-4" />
+              <span className="hidden sm:inline">Bulk Certificates</span>
             </Button>
           </div>
         </div>

@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import {
   LayoutDashboard, CalendarDays, Users, CheckSquare,
-  Megaphone, GraduationCap, LogOut, Menu, X, ChevronRight,
+  Megaphone, GraduationCap, LogOut, Menu, X, ChevronRight, BarChart2,
 } from "lucide-react";
 
 const NAV = [
@@ -14,6 +14,7 @@ const NAV = [
     section: "Overview",
     items: [
       { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+      { href: "/admin/reports", label: "Reports", icon: BarChart2 },
     ],
   },
   {
