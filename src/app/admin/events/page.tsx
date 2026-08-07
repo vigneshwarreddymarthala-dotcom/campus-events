@@ -8,7 +8,7 @@ import { getAdaptedEvents, deleteEvent, cloneEvent, getEventRegistrations, sendN
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
-import { Plus, Search, Users, Eye, Edit, Trash2, Calendar, Copy, X, Bell, CheckCircle2, UserX, Send } from "lucide-react";
+import { Plus, Search, Users, Eye, Edit, Trash2, Calendar, Copy, X, Bell, CheckCircle2, UserX, Send, Star } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
   upcoming: "bg-blue-100 text-blue-700",
@@ -273,6 +273,13 @@ export default function AdminEventsPage() {
                             <Eye className="w-4 h-4" />
                           </button>
                         </Link>
+                        {past && (
+                          <Link href={`/admin/events/${event.id}/surveys`}>
+                            <button className="p-1.5 rounded-lg hover:bg-yellow-50 text-gray-400 hover:text-yellow-500 transition-colors" title="View Surveys">
+                              <Star className="w-4 h-4" />
+                            </button>
+                          </Link>
+                        )}
                         <button
                           onClick={() => handleClone(event.id)}
                           className="p-1.5 rounded-lg hover:bg-purple-50 text-gray-400 hover:text-purple-600 transition-colors"
