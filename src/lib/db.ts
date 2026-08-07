@@ -312,8 +312,58 @@ export type DbSurvey = {
   liked_most: string | null;
   could_improve: string | null;
   other_feedback: string | null;
+  custom_answers: Record<string, string | number | boolean> | null;
   submitted_at: string;
 };
+
+export type DbSurveyQuestion = {
+  id: string;
+  event_id: string;
+  question: string;
+  type: "text" | "rating" | "yesno";
+  required: boolean;
+  sort_order: number;
+};
+
+export async function getSurveyQuestions(eventId: string): Promise<DbSurveyQuestion[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("survey_questions")
+    .select("*")
+    .eq("event_id", eventId)
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function addSurveyQuestion(
+  eventId: string,
+  question: string,
+  type: DbSurveyQuestion["type"],
+  required: boolean,
+  sortOrder: number
+): Promise<DbSurveyQuestion> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("survey_questions")
+    .insert({ event_id: eventId, question, type, required, sort_order: sortOrder })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteSurveyQuestion(id: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.from("survey_questions").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function updateSurveyQuestion(id: string, updates: Partial<Pick<DbSurveyQuestion, "question" | "type" | "required" | "sort_order">>): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.from("survey_questions").update(updates).eq("id", id);
+  if (error) throw error;
+}
 
 export async function submitSurvey(
   eventId: string,
@@ -324,6 +374,7 @@ export async function submitSurvey(
     liked_most?: string;
     could_improve?: string;
     other_feedback?: string;
+    custom_answers?: Record<string, string | number | boolean>;
   }
 ): Promise<void> {
   const supabase = createClient();
@@ -341,6 +392,7 @@ export async function submitSurvey(
     liked_most: data.liked_most || null,
     could_improve: data.could_improve || null,
     other_feedback: data.other_feedback || null,
+    custom_answers: data.custom_answers ?? {},
   });
   if (error) throw error;
 }
