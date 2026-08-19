@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { format, parseISO, differenceInDays, isToday, isTomorrow } from "date-fns";
 import { isEventPast, type Event } from "@/lib/mock-data";
 import EventCard from "@/components/shared/EventCard";
@@ -38,6 +39,7 @@ function countdownLabel(dateStr: string): { text: string; urgent: boolean } {
 
 export default function MyEventsPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [regsWithEvents, setRegsWithEvents] = useState<StudentRegistrationWithEvent[]>([]);
   const [bookmarks, setBookmarks] = useState<string[]>([]);
@@ -130,7 +132,7 @@ export default function MyEventsPage() {
             <TabsTrigger
               key={value}
               value={value}
-              className="flex-1 gap-1.5 rounded-xl data-[state=active]:bg-indigo-600 data-[state=active]:text-white text-sm py-2.5 transition-all"
+              className="flex-1 gap-1.5 rounded-xl data-active:bg-indigo-600 data-active:text-white text-sm py-2.5 transition-all"
             >
               <Icon className="w-4 h-4" />
               {label}
@@ -191,34 +193,39 @@ export default function MyEventsPage() {
               {attendedRegs.map((r, i) => {
                 const hours = calcHours(r.event_time, r.event_end_time);
                 return (
-                  <Link key={r.id} href={`/student/events/${r.event_id}`}>
-                    <div className={`flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors ${i < attendedRegs.length - 1 ? "border-b border-gray-50" : ""} group`}>
-                      <div className="w-9 h-9 bg-green-50 rounded-xl flex items-center justify-center shrink-0">
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 text-sm truncate group-hover:text-indigo-700 transition-colors">{r.event_title}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {r.event_date ? format(parseISO(r.event_date), "MMMM d, yyyy") : "—"} · {r.event_venue}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <div className="text-right">
-                          <p className="text-sm font-bold text-indigo-600">{hours}h</p>
-                          <p className="text-xs text-gray-400">earned</p>
-                        </div>
-                        <Link
-                          href={`/student/events/${r.event_id}/survey`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="flex items-center gap-1 text-xs text-amber-500 hover:text-amber-600 bg-amber-50 hover:bg-amber-100 px-2.5 py-1.5 rounded-xl transition-colors font-medium"
-                          title="Rate this event"
-                        >
-                          <Star className="w-3 h-3" /> Rate
-                        </Link>
-                        <Award className="w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition-colors" />
-                      </div>
+                  <div
+                    key={r.id}
+                    role="link"
+                    tabIndex={0}
+                    onClick={() => router.push(`/student/events/${r.event_id}`)}
+                    onKeyDown={(e) => { if (e.key === "Enter") router.push(`/student/events/${r.event_id}`); }}
+                    className={`flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors cursor-pointer ${i < attendedRegs.length - 1 ? "border-b border-gray-50" : ""} group`}
+                  >
+                    <div className="w-9 h-9 bg-green-50 rounded-xl flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="w-5 h-5 text-green-500" />
                     </div>
-                  </Link>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 text-sm truncate group-hover:text-indigo-700 transition-colors">{r.event_title}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {r.event_date ? format(parseISO(r.event_date), "MMMM d, yyyy") : "—"} · {r.event_venue}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-indigo-600">{hours}h</p>
+                        <p className="text-xs text-gray-400">earned</p>
+                      </div>
+                      <Link
+                        href={`/student/events/${r.event_id}/survey`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-1 text-xs text-amber-500 hover:text-amber-600 bg-amber-50 hover:bg-amber-100 px-2.5 py-1.5 rounded-xl transition-colors font-medium"
+                        title="Rate this event"
+                      >
+                        <Star className="w-3 h-3" /> Rate
+                      </Link>
+                      <Award className="w-4 h-4 text-gray-300 group-hover:text-indigo-400 transition-colors" />
+                    </div>
+                  </div>
                 );
               })}
 
