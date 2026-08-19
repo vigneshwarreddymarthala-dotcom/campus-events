@@ -9,7 +9,9 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const email = searchParams.get("email");
   const password = searchParams.get("password");
-  const redirectTo = searchParams.get("redirect") ?? "/";
+  // Only allow relative paths to prevent open redirect
+  const rawRedirect = searchParams.get("redirect") ?? "/";
+  const redirectTo = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/";
 
   if (!email || !password) {
     return NextResponse.json({ error: "email and password required" }, { status: 400 });

@@ -95,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       options: {
         data: {
           name: data.name,
-          role: data.role,
+          role: "student",
           department: data.department ?? null,
           year: data.year ?? null,
         },

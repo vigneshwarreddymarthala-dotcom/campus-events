@@ -21,11 +21,23 @@ async function tryExtractOgImage(url: string): Promise<string | null> {
   return match[1].replace(/&amp;/g, "&").replace(/&#039;/g, "'");
 }
 
+const ALLOWED_INSTAGRAM_HOSTS = new Set(["instagram.com", "www.instagram.com", "m.instagram.com"]);
+
+function isInstagramUrl(rawUrl: string): boolean {
+  try {
+    const parsed = new URL(rawUrl);
+    return (parsed.protocol === "https:" || parsed.protocol === "http:") &&
+      ALLOWED_INSTAGRAM_HOSTS.has(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
 export async function GET(request: NextRequest) {
   const url = request.nextUrl.searchParams.get("url");
   if (!url) return NextResponse.json({ error: "url required" }, { status: 400 });
 
-  if (!url.includes("instagram.com")) {
+  if (!isInstagramUrl(url)) {
     return NextResponse.json({ error: "Not an Instagram URL" }, { status: 400 });
   }
 

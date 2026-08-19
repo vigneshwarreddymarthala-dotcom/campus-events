@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, GraduationCap, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, GraduationCap, AlertCircle, Shield, User } from "lucide-react";
 
 export default function LoginPage() {
   return (
@@ -58,6 +58,23 @@ function LoginPageInner() {
     router.push("/");
   };
 
+  const quickLogin = async (role: "admin" | "student") => {
+    const creds: Record<string, [string, string]> = {
+      admin: ["admin@college.edu", "admin123"],
+      student: ["student@college.edu", "student123"],
+    };
+    const [quickEmail, quickPassword] = creds[role];
+    setError("");
+    setLoading(true);
+    const result = await login(quickEmail, quickPassword);
+    setLoading(false);
+    if (!result.success) {
+      setError(result.error ?? "Login failed.");
+      return;
+    }
+    router.push("/");
+  };
+
   return (
     <div className="min-h-screen flex">
       {/* Left panel */}
@@ -99,30 +116,34 @@ function LoginPageInner() {
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h2>
           <p className="text-gray-500 mb-8">Sign in to your college account</p>
 
-          {/* Demo hints */}
-          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-6 text-sm">
-            <p className="font-medium text-indigo-800 mb-2">Demo credentials</p>
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <p className="text-indigo-700">Admin: <code>admin@college.edu</code> / <code>admin123</code></p>
-                <button
-                  type="button"
-                  onClick={async () => { setLoading(true); setError(""); const r = await login("admin@college.edu", "admin123"); setLoading(false); if (!r.success) setError(r.error ?? "Login failed."); else router.push("/"); }}
-                  className="ml-2 shrink-0 text-xs bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700"
-                >
-                  Use
-                </button>
-              </div>
-              <div className="flex items-center justify-between">
-                <p className="text-indigo-700">Student: <code>student@college.edu</code> / <code>student123</code></p>
-                <button
-                  type="button"
-                  onClick={async () => { setLoading(true); setError(""); const r = await login("student@college.edu", "student123"); setLoading(false); if (!r.success) setError(r.error ?? "Login failed."); else router.push("/"); }}
-                  className="ml-2 shrink-0 text-xs bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700"
-                >
-                  Use
-                </button>
-              </div>
+          {/* Quick role login */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <button
+              type="button"
+              onClick={() => quickLogin("admin")}
+              disabled={loading}
+              className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 py-4 px-3 hover:border-indigo-400 hover:bg-indigo-50 transition-colors disabled:opacity-60"
+            >
+              <Shield className="w-5 h-5 text-indigo-600" />
+              <span className="text-sm font-medium text-gray-900">Organiser</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => quickLogin("student")}
+              disabled={loading}
+              className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 py-4 px-3 hover:border-indigo-400 hover:bg-indigo-50 transition-colors disabled:opacity-60"
+            >
+              <User className="w-5 h-5 text-indigo-600" />
+              <span className="text-sm font-medium text-gray-900">Student</span>
+            </button>
+          </div>
+
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-white px-2 text-gray-400">or sign in with email</span>
             </div>
           </div>
 

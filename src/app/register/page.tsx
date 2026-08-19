@@ -21,7 +21,6 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "student" as "student" | "admin",
     department: "",
     year: "",
     phone: "",
@@ -61,7 +60,7 @@ export default function RegisterPage() {
       name: form.name,
       email: form.email,
       password: form.password,
-      role: form.role,
+      role: "student",
       department: form.department,
       year: form.year,
       phone: form.phone,
@@ -93,27 +92,6 @@ export default function RegisterPage() {
           <p className="text-gray-500 text-sm mb-6">Join your campus community</p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Role selector */}
-            <div>
-              <Label className="mb-2 block">I am a</Label>
-              <div className="grid grid-cols-2 gap-3">
-                {(["student", "admin"] as const).map((role) => (
-                  <button
-                    key={role}
-                    type="button"
-                    onClick={() => set("role", role)}
-                    className={`py-3 px-4 rounded-xl border-2 text-sm font-medium capitalize transition-all ${
-                      form.role === role
-                        ? "border-indigo-600 bg-indigo-50 text-indigo-700"
-                        : "border-gray-200 text-gray-600 hover:border-gray-300"
-                    }`}
-                  >
-                    {role === "student" ? "Student" : "Organizer / Faculty"}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Full name */}
             <div>
               <Label htmlFor="name">Full Name</Label>
@@ -155,20 +133,18 @@ export default function RegisterPage() {
                   {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
                 </select>
               </div>
-              {form.role === "student" && (
-                <div>
-                  <Label htmlFor="year">Year</Label>
-                  <select
-                    id="year"
-                    value={form.year}
-                    onChange={(e) => set("year", e.target.value)}
-                    className="mt-1 w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                  >
-                    <option value="">Select year</option>
-                    {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
-                  </select>
-                </div>
-              )}
+              <div>
+                <Label htmlFor="year">Year</Label>
+                <select
+                  id="year"
+                  value={form.year}
+                  onChange={(e) => set("year", e.target.value)}
+                  className="mt-1 w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <option value="">Select year</option>
+                  {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
             </div>
 
             {/* Phone */}

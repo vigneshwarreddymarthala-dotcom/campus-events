@@ -1,6 +1,14 @@
 import { createClient } from "@/utils/supabase/client";
 import type { Event, Category } from "@/lib/mock-data";
 
+async function assertAdmin(): Promise<void> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+  const { data } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (data?.role !== "admin") throw new Error("Forbidden: admin only");
+}
+
 export function adaptDbEvent(e: DbEvent, registrationCount = 0): Event {
   return {
     id: e.id,
@@ -114,6 +122,7 @@ export async function getAdaptedEvent(id: string): Promise<Event | null> {
 }
 
 export async function createEvent(payload: Omit<DbEvent, "id" | "created_at" | "updated_at">): Promise<DbEvent> {
+  await assertAdmin();
   const supabase = createClient();
   const { data, error } = await supabase
     .from("events")
@@ -125,6 +134,7 @@ export async function createEvent(payload: Omit<DbEvent, "id" | "created_at" | "
 }
 
 export async function updateEvent(id: string, payload: Partial<DbEvent>): Promise<DbEvent> {
+  await assertAdmin();
   const supabase = createClient();
   const { data, error } = await supabase
     .from("events")
@@ -137,6 +147,7 @@ export async function updateEvent(id: string, payload: Partial<DbEvent>): Promis
 }
 
 export async function deleteEvent(id: string): Promise<void> {
+  await assertAdmin();
   const supabase = createClient();
   const { error } = await supabase.from("events").delete().eq("id", id);
   if (error) throw error;
@@ -249,6 +260,7 @@ export async function isRegisteredForEvent(eventId: string): Promise<boolean> {
 }
 
 export async function toggleAttendance(registrationId: string, attended: boolean): Promise<void> {
+  await assertAdmin();
   const supabase = createClient();
   const { error } = await supabase
     .from("registrations")
@@ -343,6 +355,7 @@ export async function addSurveyQuestion(
   required: boolean,
   sortOrder: number
 ): Promise<DbSurveyQuestion> {
+  await assertAdmin();
   const supabase = createClient();
   const { data, error } = await supabase
     .from("survey_questions")
@@ -354,12 +367,14 @@ export async function addSurveyQuestion(
 }
 
 export async function deleteSurveyQuestion(id: string): Promise<void> {
+  await assertAdmin();
   const supabase = createClient();
   const { error } = await supabase.from("survey_questions").delete().eq("id", id);
   if (error) throw error;
 }
 
 export async function updateSurveyQuestion(id: string, updates: Partial<Pick<DbSurveyQuestion, "question" | "type" | "required" | "sort_order">>): Promise<void> {
+  await assertAdmin();
   const supabase = createClient();
   const { error } = await supabase.from("survey_questions").update(updates).eq("id", id);
   if (error) throw error;
