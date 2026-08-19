@@ -18,7 +18,7 @@ export default function NewEventPage() {
       title: data.title!,
       description: data.description!,
       date: data.date!,
-      end_date: data.endDate ?? null,
+      end_date: data.endDate || null,
       time: data.time!,
       end_time: null,
       venue: data.venue!,

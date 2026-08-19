@@ -13,7 +13,7 @@ import { isEventPast } from "@/lib/mock-data";
 import {
   ArrowLeft, Calendar, MapPin, Users, Clock, Mail,
   Bookmark, BookmarkCheck, Share2, ExternalLink, CheckCircle2,
-  AlertCircle, FileText, Tag, History, Star,
+  AlertCircle, FileText, Tag, History, ClipboardList,
 } from "lucide-react";
 
 export default function StudentEventDetailPage({ params }: PageProps<"/student/events/[id]">) {
@@ -332,16 +332,16 @@ function StudentEventDetailPageInner({ params }: { params: PageProps<"/student/e
             {/* Survey button — only for past events the student registered for */}
             {isPast && isRegistered && (
               surveySubmitted ? (
-                <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-2.5">
-                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-400 shrink-0" />
-                  <p className="text-sm font-medium text-yellow-800">Feedback submitted — thank you!</p>
+                <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                  <p className="text-sm font-medium text-green-800">Feedback submitted — thank you!</p>
                 </div>
               ) : (
                 <Link
                   href={`/student/events/${id}/survey`}
-                  className="w-full flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-semibold py-2.5 px-4 rounded-xl text-sm transition-colors"
+                  className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition-colors"
                 >
-                  <Star className="w-4 h-4" /> Fill Feedback Survey
+                  <ClipboardList className="w-4 h-4" /> Fill Feedback Survey
                 </Link>
               )
             )}

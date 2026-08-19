@@ -9,7 +9,7 @@ import {
 import { type Event } from "@/lib/mock-data";
 import { format } from "date-fns";
 import {
-  ArrowLeft, Star, ThumbsUp, ThumbsDown, Download, BarChart2,
+  ArrowLeft, Star, ThumbsUp, ThumbsDown, FileDown, BarChart2,
   MessageSquare, Plus, Trash2, GripVertical, Type, ToggleLeft, Settings,
 } from "lucide-react";
 
@@ -97,6 +97,48 @@ export default function AdminSurveysPage({ params }: { params: Promise<{ id: str
     });
   };
 
+  const downloadResponse = (s: DbSurvey) => {
+    const starStr = (n: number) => "★".repeat(n) + "☆".repeat(5 - n);
+    const lines: string[] = [
+      `SURVEY RESPONSE — ${event!.title}`,
+      `Submitted: ${format(new Date(s.submitted_at), "dd MMM yyyy, h:mm a")}`,
+      `Student: ${s.student_name} (${s.student_email})`,
+      "",
+      "RATINGS",
+      `Overall Event Rating: ${starStr(s.rating)} (${s.rating}/5)`,
+      `Organization Rating:  ${starStr(s.organization_rating)} (${s.organization_rating}/5)`,
+      `Would Recommend: ${s.would_recommend ? "Yes" : "No"}`,
+    ];
+    if (s.liked_most || s.could_improve || s.other_feedback) {
+      lines.push("", "FEEDBACK");
+      if (s.liked_most) lines.push(`Liked Most: ${s.liked_most}`);
+      if (s.could_improve) lines.push(`Could Improve: ${s.could_improve}`);
+      if (s.other_feedback) lines.push(`Other Feedback: ${s.other_feedback}`);
+    }
+    if (questions.length > 0 && s.custom_answers && Object.keys(s.custom_answers).length > 0) {
+      lines.push("", "CUSTOM QUESTIONS");
+      questions.forEach((q, idx) => {
+        const ans = s.custom_answers?.[q.id];
+        if (ans === null || ans === undefined || ans === "") return;
+        lines.push(`Q${idx + 7}. ${q.question}`);
+        if (q.type === "rating") {
+          lines.push(`    → ${starStr(Number(ans))} (${ans}/5)`);
+        } else if (q.type === "yesno") {
+          lines.push(`    → ${ans === true || ans === "true" ? "Yes" : "No"}`);
+        } else {
+          lines.push(`    → ${ans}`);
+        }
+      });
+    }
+    const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${s.student_name.replace(/\s+/g, "_")}_feedback.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const exportCSV = () => {
     const standardHeaders = ["Name", "Email", "Overall Rating", "Organization Rating",
       "Would Recommend", "Liked Most", "Could Improve", "Other Feedback"];
@@ -143,7 +185,7 @@ export default function AdminSurveysPage({ params }: { params: Promise<{ id: str
               onClick={exportCSV}
               className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors"
             >
-              <Download className="w-4 h-4" /> Download CSV
+              <FileDown className="w-4 h-4" /> Download CSV
             </button>
           )}
         </div>
@@ -341,10 +383,10 @@ export default function AdminSurveysPage({ params }: { params: Promise<{ id: str
             </div>
           ) : (
             surveys.map((s) => (
-              <div key={s.id} className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
+              <div key={s.id} className="bg-white rounded-2xl border border-gray-200 border-l-4 border-l-indigo-500 p-5 space-y-4">
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-sm shrink-0">
+                    <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-sm shrink-0">
                       {s.student_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
                     </div>
                     <div>
@@ -363,8 +405,16 @@ export default function AdminSurveysPage({ params }: { params: Promise<{ id: str
                         <ThumbsDown className="w-3 h-3" /> Doesn&apos;t recommend
                       </span>
                     )}
+                    <button
+                      onClick={() => downloadResponse(s)}
+                      title="Download response"
+                      className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-indigo-600 hover:border-indigo-300 transition-colors"
+                    >
+                      <FileDown className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
+                <div className="border-t border-gray-100" />
 
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div className="bg-gray-50 rounded-xl p-3 space-y-1">

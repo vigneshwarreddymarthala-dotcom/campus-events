@@ -49,8 +49,10 @@ export type Registrant = {
 
 // Returns true if event date has passed (auto-determines past regardless of status field)
 export function isEventPast(event: Event): boolean {
-  const endDate = event.endDate ?? event.date;
-  return new Date(endDate) < new Date(new Date().toDateString());
+  const dateStr = event.endDate ?? event.date;
+  // For multi-day events, consider past after end of that day; for single-day, use the event time
+  const timeStr = event.endDate ? "23:59" : (event.time ?? "23:59");
+  return new Date(`${dateStr}T${timeStr}:00`) < new Date();
 }
 
 export const MOCK_EVENTS: Event[] = [

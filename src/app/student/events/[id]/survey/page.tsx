@@ -7,7 +7,7 @@ import {
   getSurveyQuestions, type DbSurveyQuestion,
 } from "@/lib/db";
 import { isEventPast, type Event } from "@/lib/mock-data";
-import { ArrowLeft, Star, CheckCircle2, ThumbsUp, ThumbsDown } from "lucide-react";
+import { ArrowLeft, Star, CheckCircle2, ThumbsUp, ThumbsDown, ClipboardList } from "lucide-react";
 import { format } from "date-fns";
 
 function StarRating({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
@@ -242,7 +242,7 @@ export default function SurveyPage({ params }: { params: Promise<{ id: string }>
       <div className="bg-white rounded-2xl border border-gray-200 p-6">
         <div className="flex items-center gap-3 mb-1">
           <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-            <Star className="w-5 h-5 text-indigo-600" />
+            <ClipboardList className="w-5 h-5 text-indigo-600" />
           </div>
           <div>
             <h1 className="text-lg font-bold text-gray-900">Event Feedback</h1>
