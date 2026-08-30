@@ -49,10 +49,10 @@ function StudentEventDetailPageInner({ params }: { params: PageProps<"/student/e
     return <div className="text-center py-20 text-gray-400">Loading...</div>;
   }
 
-  if (!event) {
+  if (!event || event.status === "scheduled") {
     return (
       <div className="text-center py-20">
-        <p className="text-gray-500">Event not found.</p>
+        <p className="text-gray-500">Event not found or not yet published.</p>
         <Link href="/student/events" className="text-indigo-600 hover:underline mt-2 inline-block">Browse Events</Link>
       </div>
     );

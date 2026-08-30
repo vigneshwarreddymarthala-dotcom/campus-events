@@ -10,6 +10,20 @@ async function assertAdmin(): Promise<void> {
 }
 
 export function adaptDbEvent(e: DbEvent, registrationCount = 0): Event {
+  let parsedStatus = e.status as Event["status"];
+  let publishAt: string | undefined = e.publish_at ?? undefined;
+
+  // Fallback for mock data or before migration
+  if (e.status.startsWith("scheduled:")) {
+    publishAt = e.status.split("scheduled:")[1];
+  }
+
+  if (publishAt && new Date() >= new Date(publishAt)) {
+    parsedStatus = (new Date(`${e.end_date || e.date}T${e.time}:00`) < new Date()) ? "completed" : "upcoming";
+  } else if (publishAt && new Date() < new Date(publishAt)) {
+    parsedStatus = "scheduled";
+  }
+
   return {
     id: e.id,
     title: e.title,
@@ -31,7 +45,8 @@ export function adaptDbEvent(e: DbEvent, registrationCount = 0): Event {
     eligibility: "Open to all",
     tags: e.tags ?? [],
     attachments: [],
-    status: e.status as Event["status"],
+    status: parsedStatus,
+    publishAt,
     views: 0,
     registrations: registrationCount,
   };
@@ -67,6 +82,7 @@ export type DbEvent = {
   ticket_url?: string | null;
   requirements: string[];
   created_by: string | null;
+  publish_at?: string | null;
   created_at: string;
   updated_at: string;
 };

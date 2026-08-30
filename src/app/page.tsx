@@ -18,33 +18,33 @@ const STATS = [
 const FEATURES = [
   {
     icon: Calendar,
-    title: "Discover events",
-    body: "Browse every workshop, seminar, and fest in one calendar — searchable, filterable, always up to date.",
+    title: "Know what's on, instantly",
+    body: "One calendar for every workshop, seminar, and fest on campus. No more finding out an event happened after it's over.",
   },
   {
     icon: Bookmark,
-    title: "Register in seconds",
-    body: "Sign up with your saved profile — no retyping details for every event. Bookmark what you're curious about.",
+    title: "Save your spot before it's gone",
+    body: "Your details are already saved, so claiming a seat is one tap — not another form. Bookmark anything you're still deciding on.",
   },
   {
     icon: QrCode,
-    title: "QR check-in",
-    body: "Scan at the door to mark attendance instantly. No paper sign-in sheets, no manual counting.",
+    title: "Walk in, you're marked present",
+    body: "Scan at the door and you're checked in. No queues, no sign-in sheets, no chasing anyone down after.",
   },
   {
     icon: Bell,
-    title: "Stay in the loop",
-    body: "Reminders before events, and instant alerts if a venue or time changes — nothing lost in a group chat.",
+    title: "Nothing sneaks up on you",
+    body: "A nudge before your event starts, an instant heads-up if the venue or time changes. You're never the last to know.",
   },
   {
     icon: BarChart3,
-    title: "Built for organizers",
-    body: "Live registration dashboards, attendance analytics, and one-click registrant exports.",
+    title: "Run the event, not a spreadsheet",
+    body: "Organizers get live registration numbers, real attendance data, and a registrant export whenever they need one.",
   },
   {
     icon: CheckCircle2,
-    title: "Verified accounts",
-    body: "College-email login keeps registrations real and lets you track participation over time.",
+    title: "Real students, real numbers",
+    body: "Every account is a verified college email, so the people on this platform — and the turnout you see — are real.",
   },
 ];
 
@@ -99,14 +99,14 @@ export default function Home() {
       {/* Hero */}
       <section className="max-w-6xl mx-auto px-6 pt-20 pb-16 text-center">
         <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
-          Replacing 1,500-student WhatsApp groups, one event at a time
+          Built after one too many events found out about too late
         </div>
         <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 tracking-tight leading-[1.1] max-w-3xl mx-auto">
-          Your college&apos;s events,<br />in one place.
+          Never miss what&apos;s<br />happening on campus.
         </h1>
         <p className="text-lg text-gray-500 max-w-xl mx-auto mt-5">
-          Discover, register, and check in to campus events without digging through chat groups.
-          Built for students and organizers alike.
+          You shouldn&apos;t have to scroll five WhatsApp groups to find out what you already missed.
+          One tap to see what&apos;s on, one tap to be there.
         </p>
         <div className="flex items-center justify-center gap-3 mt-8">
           <Link
@@ -138,8 +138,8 @@ export default function Home() {
       <section className="bg-gray-50 border-y border-gray-100">
         <div className="max-w-6xl mx-auto px-6 py-20">
           <div className="text-center max-w-xl mx-auto mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Everything the group chat couldn&apos;t do</h2>
-            <p className="text-gray-500 mt-3">One app for discovering events, registering, and running them.</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">What changes for you</h2>
+            <p className="text-gray-500 mt-3">Less scrolling, less guessing, less chasing people down. That&apos;s the whole point.</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {FEATURES.map(({ icon: Icon, title, body }) => (
@@ -174,9 +174,9 @@ export default function Home() {
       {/* CTA banner */}
       <section className="max-w-6xl mx-auto px-6 pb-20">
         <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-3xl px-8 py-14 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">Ready to see what&apos;s on?</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white">There&apos;s already something filling up.</h2>
           <p className="text-indigo-200 mt-3 max-w-md mx-auto">
-            Create your account with your college email and start exploring events today.
+            Create your account with your college email — it takes less time than reading one more forwarded message.
           </p>
           <Link
             href="/register"

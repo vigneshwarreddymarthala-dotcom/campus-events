@@ -42,7 +42,9 @@ export default function EventForm({ initial, onSubmit, submitLabel }: Props) {
     bannerImage: initial?.bannerImage ?? "",
     bannerLink: initial?.bannerLink ?? "",
     ticketUrl: initial?.ticketUrl ?? "",
+    publishAt: initial?.publishAt ?? "",
   });
+  const [publishMode, setPublishMode] = useState<"now" | "later">(initial?.status === "scheduled" || initial?.publishAt ? "later" : "now");
   const [tagInput, setTagInput] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
@@ -157,7 +159,11 @@ export default function EventForm({ initial, onSubmit, submitLabel }: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(form as Partial<Event>);
+    const submitData = { ...form };
+    if (publishMode === "now") {
+      submitData.publishAt = "";
+    }
+    onSubmit(submitData as Partial<Event>);
   };
 
   const tabs: { id: BannerMode; label: string; icon: React.ReactNode }[] = [
@@ -189,28 +195,33 @@ export default function EventForm({ initial, onSubmit, submitLabel }: Props) {
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="category">Category *</Label>
-                <select
-                  id="category"
-                  value={form.category}
-                  onChange={(e) => set("category", e.target.value)}
-                  className="mt-1 w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                  required
-                >
-                  {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="status">Status</Label>
-                <select
-                  id="status"
-                  value={form.status}
-                  onChange={(e) => set("status", e.target.value)}
-                  className="mt-1 w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                >
-                  {["upcoming", "ongoing", "completed", "cancelled", "postponed"].map((s) => (
-                    <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-                  ))}
-                </select>
+                <div className="flex gap-2">
+                  <select
+                    id="category"
+                    value={CATEGORIES.some(c => c.value === form.category) ? form.category : "custom"}
+                    onChange={(e) => {
+                      if (e.target.value !== "custom") {
+                        set("category", e.target.value);
+                      } else {
+                        set("category", "");
+                      }
+                    }}
+                    className="mt-1 w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                    required
+                  >
+                    {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                    <option value="custom">+ Add new category</option>
+                  </select>
+                  {!CATEGORIES.some(c => c.value === form.category) && (
+                    <Input
+                      value={form.category}
+                      onChange={(e) => set("category", e.target.value)}
+                      placeholder="Custom category"
+                      className="mt-1 w-full"
+                      required
+                    />
+                  )}
+                </div>
               </div>
             </div>
 
@@ -495,6 +506,50 @@ export default function EventForm({ initial, onSubmit, submitLabel }: Props) {
             <div>
               <Label htmlFor="contactEmail">Contact Email *</Label>
               <Input id="contactEmail" type="email" value={form.contactEmail} onChange={(e) => set("contactEmail", e.target.value)} required className="mt-1" />
+            </div>
+          </Card>
+
+          <Card className="p-4 sm:p-6 space-y-5">
+            <h2 className="font-semibold text-gray-900">Publishing</h2>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="publishMode"
+                    value="now"
+                    checked={publishMode === "now"}
+                    onChange={() => setPublishMode("now")}
+                    className="accent-indigo-600"
+                  />
+                  Publish Now
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="publishMode"
+                    value="later"
+                    checked={publishMode === "later"}
+                    onChange={() => setPublishMode("later")}
+                    className="accent-indigo-600"
+                  />
+                  Schedule for Later
+                </label>
+              </div>
+
+              {publishMode === "later" && (
+                <div>
+                  <Label htmlFor="publishAt">Publish Date &amp; Time *</Label>
+                  <Input
+                    type="datetime-local"
+                    id="publishAt"
+                    value={form.publishAt}
+                    onChange={(e) => set("publishAt", e.target.value)}
+                    required={publishMode === "later"}
+                    className="mt-1"
+                  />
+                </div>
+              )}
             </div>
           </Card>
 

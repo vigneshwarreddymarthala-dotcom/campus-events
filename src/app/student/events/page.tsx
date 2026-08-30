@@ -41,6 +41,16 @@ function StudentEventsPageInner() {
     router.replace(`/student/events?${params.toString()}`, { scroll: false });
   };
 
+  const dynamicCategories = [...CATEGORIES];
+  const existingCats = new Set(CATEGORIES.map(c => c.value));
+  events.forEach(e => {
+    if (!existingCats.has(e.category)) {
+      existingCats.add(e.category);
+      dynamicCategories.push({ value: e.category, label: e.category.charAt(0).toUpperCase() + e.category.slice(1) });
+    }
+  });
+
+
   useEffect(() => {
     getAdaptedEvents().then(setEvents).catch(console.error);
     getMyBookmarks().then(setBookmarks).catch(console.error);
@@ -73,8 +83,10 @@ function StudentEventsPageInner() {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   };
 
-  const upcoming = events.filter((e) => !isEventPast(e) && matchesFilters(e)).sort(sortFn);
-  const past = events.filter((e) => isEventPast(e) && matchesFilters(e))
+  const filtered = [...events].filter(e => e.status !== "scheduled");
+
+  const upcoming = filtered.filter((e) => !isEventPast(e) && matchesFilters(e)).sort(sortFn);
+  const past = filtered.filter((e) => isEventPast(e) && matchesFilters(e))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // most recent past first
 
   const allFiltered = [...upcoming, ...past];
@@ -127,7 +139,7 @@ function StudentEventsPageInner() {
             className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring w-full sm:w-auto"
           >
             <option value="all">All Categories</option>
-            {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            {dynamicCategories.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
           <select
             value={feeFilter}
@@ -182,7 +194,7 @@ function StudentEventsPageInner() {
 
       {/* Category chips — sticky below the top nav */}
       <div className="sticky top-14 sm:top-16 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 bg-gray-50 pt-2 pb-2 flex gap-2 overflow-x-auto scrollbar-hide border-b border-gray-100">
-        {[{ value: "all", label: "All" }, ...CATEGORIES].map((c) => (
+        {[{ value: "all", label: "All" }, ...dynamicCategories].map((c) => (
           <button
             key={c.value}
             onClick={() => setCategory(c.value as "all" | Category)}

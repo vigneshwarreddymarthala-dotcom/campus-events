@@ -16,6 +16,7 @@ const STATUS_COLORS: Record<string, string> = {
   completed: "bg-gray-100 text-gray-600",
   cancelled: "bg-red-100 text-red-700",
   postponed: "bg-yellow-100 text-yellow-700",
+  scheduled: "bg-purple-100 text-purple-700",
 };
 
 type AbsentInfo = {
@@ -62,6 +63,15 @@ export default function AdminEventsPage() {
     return aPast
       ? new Date(b.date).getTime() - new Date(a.date).getTime()
       : new Date(a.date).getTime() - new Date(b.date).getTime();
+  });
+
+  const dynamicCategories = [...CATEGORIES];
+  const existingCats = new Set(CATEGORIES.map(c => c.value));
+  events.forEach(e => {
+    if (!existingCats.has(e.category)) {
+      existingCats.add(e.category);
+      dynamicCategories.push({ value: e.category, label: e.category.charAt(0).toUpperCase() + e.category.slice(1) });
+    }
   });
 
   const filtered = sortedEvents.filter((e) => {
@@ -164,7 +174,7 @@ export default function AdminEventsPage() {
           className="h-9 rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring w-full sm:w-auto"
         >
           <option value="all">All Categories</option>
-          {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+          {dynamicCategories.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
         </select>
         <select
           value={statusFilter}
@@ -172,7 +182,7 @@ export default function AdminEventsPage() {
           className="h-9 rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring w-full sm:w-auto"
         >
           <option value="all">All Status</option>
-          {["upcoming", "ongoing", "completed", "cancelled"].map((s) => (
+          {["upcoming", "ongoing", "completed", "cancelled", "scheduled"].map((s) => (
             <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
           ))}
         </select>

@@ -1,12 +1,4 @@
-export type Category =
-  | "workshop"
-  | "seminar"
-  | "competition"
-  | "cultural"
-  | "sports"
-  | "guest-lecture"
-  | "hackathon"
-  | "other";
+export type Category = string;
 
 export type Event = {
   id: string;
@@ -30,7 +22,8 @@ export type Event = {
   eligibility: string;
   tags: string[];
   attachments: { name: string; url: string }[];
-  status: "upcoming" | "ongoing" | "cancelled" | "postponed" | "completed";
+  status: "upcoming" | "ongoing" | "cancelled" | "postponed" | "completed" | "scheduled";
+  publishAt?: string;
   views: number;
   registrations: number;
 };
