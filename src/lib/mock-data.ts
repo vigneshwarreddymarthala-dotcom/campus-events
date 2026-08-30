@@ -48,6 +48,26 @@ export function isEventPast(event: Event): boolean {
   return new Date(`${dateStr}T${timeStr}:00`) < new Date();
 }
 
+export function getEventStatus(event: Event): Event["status"] {
+  if (event.status === "cancelled" || event.status === "postponed" || event.status === "scheduled") {
+    return event.status;
+  }
+  
+  if (isEventPast(event)) return "completed";
+  
+  const startDate = new Date(`${event.date}T${event.time}:00`);
+  const endDate = event.endDate 
+    ? new Date(`${event.endDate}T23:59:00`)
+    : new Date(`${event.date}T23:59:00`);
+    
+  const now = new Date();
+  if (now >= startDate && now <= endDate) {
+    return "ongoing";
+  }
+  
+  return "upcoming";
+}
+
 export const MOCK_EVENTS: Event[] = [
   // ── PAST EVENTS (before Aug 4, 2026) ──────────────────────────────────────
   {

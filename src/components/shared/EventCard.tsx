@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { format, differenceInDays, isToday, isTomorrow } from "date-fns";
-import { Event, CATEGORY_COLORS, isEventPast } from "@/lib/mock-data";
+import { Event, CATEGORY_COLORS, isEventPast, getEventStatus } from "@/lib/mock-data";
 import { MapPin, Bookmark, BookmarkCheck, Users, Clock } from "lucide-react";
 
 type Props = {
@@ -157,7 +157,7 @@ export default function EventCard({
           {(isPast || event.status === "cancelled" || event.status === "postponed") && (
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="bg-white/90 text-gray-700 font-bold text-sm px-4 py-1.5 rounded-full capitalize tracking-wide">
-                {isPast ? "Ended" : event.status}
+                {getEventStatus(event)}
               </span>
             </div>
           )}

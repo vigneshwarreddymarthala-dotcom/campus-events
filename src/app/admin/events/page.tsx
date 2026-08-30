@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CATEGORY_COLORS, CATEGORIES, isEventPast, type Event } from "@/lib/mock-data";
+import { CATEGORY_COLORS, CATEGORIES, isEventPast, getEventStatus, type Event } from "@/lib/mock-data";
 import { getAdaptedEvents, deleteEvent, cloneEvent, getEventRegistrations, sendNotification, type DbRegistration } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -272,8 +272,8 @@ export default function AdminEventsPage() {
                     </td>
 
                     <td className="px-4 py-3">
-                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize ${STATUS_COLORS[past ? "completed" : event.status] ?? STATUS_COLORS.completed}`}>
-                        {past ? "completed" : event.status}
+                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize ${STATUS_COLORS[getEventStatus(event)] ?? STATUS_COLORS.completed}`}>
+                        {getEventStatus(event)}
                       </span>
                     </td>
                     <td className="px-4 py-3">
