@@ -277,19 +277,12 @@ export default function AdminEventsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <Link href={`/admin/events/${event.id}/registrants`}>
-                          <button className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors" title="View Registrants">
-                            <Eye className="w-4 h-4" />
+                      <div className="flex items-center gap-3">
+                        <Link href={`/admin/events/${event.id}`}>
+                          <button className="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 text-sm font-medium hover:bg-indigo-100 transition-colors">
+                            Open
                           </button>
                         </Link>
-                        {past && (
-                          <Link href={`/admin/events/${event.id}/surveys`}>
-                            <button className="p-1.5 rounded-lg hover:bg-yellow-50 text-gray-400 hover:text-yellow-500 transition-colors" title="View Surveys">
-                              <Star className="w-4 h-4" />
-                            </button>
-                          </Link>
-                        )}
                         <button
                           onClick={() => handleClone(event.id)}
                           className="p-1.5 rounded-lg hover:bg-purple-50 text-gray-400 hover:text-purple-600 transition-colors"
@@ -297,15 +290,10 @@ export default function AdminEventsPage() {
                         >
                           <Copy className="w-4 h-4" />
                         </button>
-                        <Link href={`/admin/events/${event.id}`}>
-                          <button className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors" title="Edit">
-                            <Edit className="w-4 h-4" />
-                          </button>
-                        </Link>
                         <button
                           onClick={() => handleDelete(event.id, event.title)}
                           className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"
-                          title="Delete"
+                          title="Delete Event"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

@@ -7,6 +7,8 @@ import { getAdaptedEvents, getEventRegistrations, getEventSurveys, type DbRegist
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import ReportsTab from "./ReportsTab";
 import { format, isToday } from "date-fns";
 import {
   CalendarDays, Users, TrendingUp, Plus, ArrowRight,
@@ -21,6 +23,7 @@ export default function AdminDashboard() {
   const [totalAttended, setTotalAttended] = useState(0);
   const [avgSurveyRating, setAvgSurveyRating] = useState<number | null>(null);
   const [categoryStats, setCategoryStats] = useState<{ label: string; count: number }[]>([]);
+  const [activeTab, setActiveTab] = useState("overview");
   const [topEvents, setTopEvents] = useState<{ title: string; regs: number; capacity: number }[]>([]);
 
   useEffect(() => {

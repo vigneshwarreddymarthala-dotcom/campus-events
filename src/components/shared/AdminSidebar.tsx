@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import {
-  LayoutDashboard, CalendarDays, Users, CheckSquare,
+  LayoutDashboard, CalendarDays, Users,
   Megaphone, GraduationCap, LogOut, Menu, X, ChevronRight, BarChart2,
 } from "lucide-react";
 
@@ -14,7 +14,6 @@ const NAV = [
     section: "Overview",
     items: [
       { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-      { href: "/admin/reports", label: "Reports", icon: BarChart2 },
     ],
   },
   {
@@ -22,7 +21,6 @@ const NAV = [
     items: [
       { href: "/admin/events", label: "Events", icon: CalendarDays },
       { href: "/admin/students", label: "Students", icon: Users },
-      { href: "/admin/attendance", label: "Attendance", icon: CheckSquare },
     ],
   },
   {

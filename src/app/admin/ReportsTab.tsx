@@ -14,7 +14,7 @@ type EventRow = {
   avgRating: number | null;
 };
 
-export default function ReportsPage() {
+export default function ReportsTab() {
   const [rows, setRows] = useState<EventRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -68,11 +68,7 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 print:hidden">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Semester Report</h1>
-          <p className="text-gray-500 text-sm mt-1">Full summary of all events and engagement</p>
-        </div>
+      <div className="flex justify-end gap-3 print:hidden">
         <button
           onClick={() => window.print()}
           className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
