@@ -114,3 +114,22 @@ export async function hasUserApplied(jobId: string, userId: string): Promise<boo
   if (error && error.code !== "42P01") throw error;
   return !!data;
 }
+
+export type DbJobApplicationWithJob = DbJobApplication & {
+  jobs: DbJob;
+};
+
+export async function getUserAppliedJobs(userId: string): Promise<DbJobApplicationWithJob[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("job_applications")
+    .select("*, jobs(*)")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    if (error.code === "42P01") return [];
+    throw error;
+  }
+  return (data as any) ?? [];
+}
