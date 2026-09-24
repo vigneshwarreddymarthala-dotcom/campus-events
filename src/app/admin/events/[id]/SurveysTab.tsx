@@ -9,7 +9,7 @@ import { type Event } from "@/lib/mock-data";
 import { format } from "date-fns";
 import {
   Star, ThumbsUp, ThumbsDown, FileDown, BarChart2,
-  MessageSquare, Plus, Trash2, GripVertical, Type, ToggleLeft, Settings, X, Activity, Edit2, Save
+  MessageSquare, Plus, Trash2, GripVertical, Type, ToggleLeft, Settings, X, Activity, Edit2, Save, FileText, Edit3, CheckCircle2
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
@@ -277,169 +277,147 @@ export default function SurveysTab({ id }: { id: string }) {
                 <h3 className="font-semibold text-gray-900">Custom Questions</h3>
                 <span className="text-xs bg-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded-full font-bold">{questions.length}</span>
               </div>
-              {!showAddForm && (
-                <button
-                  onClick={() => setShowAddForm(true)}
-                  className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors"
-                >
-                  <Plus className="w-4 h-4" /> Create Question
-                </button>
-              )}
+              <button
+                onClick={() => setTab("create")}
+                className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors"
+              >
+                <Plus className="w-4 h-4" /> Create Question
+              </button>
             </div>
 
-            {showAddForm && (
-              <div className="bg-indigo-50/50 rounded-xl border border-indigo-100 p-5 space-y-4">
-                <p className="text-sm font-bold text-indigo-900">Add a custom question</p>
-                <textarea
-                  value={newQ}
-                  onChange={(e) => setNewQ(e.target.value)}
-                  placeholder="e.g. What topic would you like covered in future events?"
-                  rows={2}
-                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                />
-                <div className="flex items-center gap-4 flex-wrap">
-                  <select
-                    value={newType}
-                    onChange={(e) => setNewType(e.target.value as DbSurveyQuestion["type"])}
-                    className="h-10 rounded-xl border border-gray-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[140px]"
-                  >
-                    <option value="text">Text answer</option>
-                    <option value="rating">Star rating (1–5)</option>
-                    <option value="yesno">Yes / No</option>
-                  </select>
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer select-none bg-white border border-gray-200 px-4 h-10 rounded-xl hover:border-gray-300 transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={newRequired}
-                      onChange={(e) => setNewRequired(e.target.checked)}
-                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
-                    />
-                    Required
-                  </label>
-                  <button
-                    onClick={handleAddQuestion}
-                    disabled={adding || !newQ.trim()}
-                    className="flex items-center gap-2 bg-indigo-600 text-white px-5 h-10 rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors ml-auto"
-                  >
-                    {adding ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
-                    Save Question
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {questions.length === 0 && !showAddForm ? (
-              <div className="py-12 text-center border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
-                <p className="text-gray-500 font-medium mb-2">No custom questions added.</p>
-                <button onClick={() => setShowAddForm(true)} className="text-indigo-600 font-medium hover:underline text-sm">
-                  Create your first custom question
-                </button>
+            {questions.length === 0 ? (
+              <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                <p className="text-gray-500 text-sm">No custom questions added yet.</p>
+                <p className="text-gray-400 text-xs mt-1">Default questions (rating, liked most, etc.) are always included.</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {questions.map((q, idx) => (
-                  <div key={q.id} className="bg-gray-50 rounded-xl border border-gray-100 p-4">
+                  <div key={q.id} className="group flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-indigo-100 hover:bg-indigo-50/30 transition-all">
+                    <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                      {idx + 7}
+                    </div>
                     {editingId === q.id ? (
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-bold text-gray-900">Edit question</p>
-                          <button onClick={() => setEditingId(null)} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-200 transition-colors">
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
+                      <div className="flex-1 space-y-3">
                         <textarea
                           value={editQ}
                           onChange={(e) => setEditQ(e.target.value)}
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                           rows={2}
-                          className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                         />
-                        <div className="flex items-center gap-4 flex-wrap">
+                        <div className="flex items-center gap-3">
                           <select
                             value={editType}
-                            onChange={(e) => setEditType(e.target.value as DbSurveyQuestion["type"])}
-                            className="h-10 rounded-xl border border-gray-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[140px]"
+                            onChange={(e) => setEditType(e.target.value as any)}
+                            className="h-8 rounded-lg border border-gray-300 bg-white px-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                           >
                             <option value="text">Text answer</option>
                             <option value="rating">Star rating (1–5)</option>
                             <option value="yesno">Yes / No</option>
                           </select>
-                          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer select-none bg-white border border-gray-200 px-4 h-10 rounded-xl hover:border-gray-300 transition-colors">
+                          <label className="flex items-center gap-1.5 text-sm cursor-pointer select-none">
                             <input
                               type="checkbox"
                               checked={editRequired}
                               onChange={(e) => setEditRequired(e.target.checked)}
-                              className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
-                            />
-                            Required
+                              className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                            /> Required
                           </label>
-                          <button
-                            onClick={handleSaveEdit}
-                            disabled={savingEdit || !editQ.trim()}
-                            className="flex items-center gap-2 bg-indigo-600 text-white px-5 h-10 rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors ml-auto"
-                          >
-                            {savingEdit ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
-                            Update
-                          </button>
+                          <div className="ml-auto flex items-center gap-2">
+                            <button onClick={() => setEditingId(null)} className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700">Cancel</button>
+                            <button
+                              onClick={handleSaveEdit}
+                              disabled={savingEdit || !editQ.trim()}
+                              className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+                            >
+                              {savingEdit ? "Saving..." : "Save"}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-start gap-4">
-                        <span className="w-6 h-6 bg-indigo-100 rounded-full text-xs flex items-center justify-center text-indigo-700 font-bold shrink-0 mt-0.5">
-                          {idx + 7}
-                        </span>
+                      <>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900">{q.question}</p>
-                          <div className="flex items-center gap-3 mt-2">
-                            <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-white px-2.5 py-1 rounded-md border border-gray-200">
-                              {TYPE_ICONS[q.type]} {TYPE_LABELS[q.type]}
+                          <p className="text-sm font-semibold text-gray-900">{q.question}</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white border border-gray-200 text-xs font-medium text-gray-600">
+                              {q.type === "rating" ? <Star className="w-3 h-3 text-yellow-500" /> : <FileText className="w-3 h-3 text-gray-400" />}
+                              {q.type === "rating" ? "Star rating" : q.type === "yesno" ? "Yes / No" : "Text answer"}
                             </span>
-                            <span className={`text-xs px-2.5 py-1 rounded-md font-medium border ${
-                              q.required ? "bg-red-50 text-red-700 border-red-200" : "bg-white text-gray-500 border-gray-200"
-                            }`}>
+                            <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${q.required ? "bg-red-50 text-red-600 border border-red-100" : "bg-gray-100 text-gray-500 border border-gray-200"}`}>
                               {q.required ? "Required" : "Optional"}
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 shrink-0">
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => startEditing(q)}
-                            className="p-2 rounded-lg hover:bg-gray-200 text-gray-500 hover:text-gray-900 transition-colors"
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-white hover:shadow-sm transition-all"
+                            title="Edit"
                           >
-                            <Edit2 className="w-4 h-4" />
+                            <Edit3 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(q.id)}
                             disabled={deletingId === q.id}
-                            className="p-2 rounded-lg hover:bg-red-100 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-white hover:shadow-sm transition-all"
+                            title="Delete"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            {deletingId === q.id ? <span className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin block" /> : <Trash2 className="w-4 h-4" />}
                           </button>
                         </div>
-                      </div>
+                      </>
                     )}
                   </div>
                 ))}
               </div>
             )}
           </div>
+        </TabsContent>
+        
+        <TabsContent value="create" className="space-y-6">
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+            <h3 className="font-semibold text-gray-900 border-b border-gray-100 pb-4">Create New Question</h3>
 
-          <div className="bg-gray-50 rounded-2xl border border-gray-200 p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Default questions (Always included)</h3>
-            <div className="space-y-3">
-              {[
-                "Overall event rating ★★★★★",
-                "Organization rating ★★★★★",
-                "Would you recommend this event? (Yes / No)",
-                "What did you like most? (text)",
-                "What could be improved? (text)",
-                "Any other feedback? (text)",
-              ].map((q, i) => (
-                <div key={i} className="flex items-center gap-3 text-sm text-gray-600">
-                  <span className="w-6 h-6 bg-gray-200 rounded-full text-xs flex items-center justify-center text-gray-600 font-semibold shrink-0">{i + 1}</span>
-                  {q}
-                </div>
-              ))}
+            <div className="bg-indigo-50/50 rounded-xl border border-indigo-100 p-5 space-y-4">
+              <p className="text-sm font-bold text-indigo-900">Add a custom question</p>
+              <textarea
+                value={newQ}
+                onChange={(e) => setNewQ(e.target.value)}
+                placeholder="e.g. What topic would you like covered in future events?"
+                rows={2}
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              />
+              <div className="flex items-center gap-4 flex-wrap">
+                <select
+                  value={newType}
+                  onChange={(e) => setNewType(e.target.value as DbSurveyQuestion["type"])}
+                  className="h-10 rounded-xl border border-gray-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[140px]"
+                >
+                  <option value="text">Text answer</option>
+                  <option value="rating">Star rating (1–5)</option>
+                  <option value="yesno">Yes / No</option>
+                </select>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer select-none bg-white border border-gray-200 px-4 h-10 rounded-xl hover:border-gray-300 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={newRequired}
+                    onChange={(e) => setNewRequired(e.target.checked)}
+                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                  />
+                  Required
+                </label>
+                <button
+                  onClick={handleAddQuestion}
+                  disabled={!newQ.trim() || adding}
+                  className="ml-auto flex items-center gap-2 bg-indigo-600 text-white px-5 h-10 rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+                >
+                  {adding ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                  Save Question
+                </button>
+              </div>
             </div>
+
           </div>
         </TabsContent>
 

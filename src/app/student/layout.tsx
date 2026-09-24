@@ -8,6 +8,7 @@ import TopNav from "@/components/shared/TopNav";
 const STUDENT_LINKS = [
   { href: "/student/events", label: "Discover Events", mobileLabel: "Events" },
   { href: "/student/my-events", label: "My Events", mobileLabel: "My Events" },
+  { href: "/student/jobs", label: "Jobs", mobileLabel: "Jobs" },
   { href: "/student/profile", label: "Profile", mobileLabel: "Profile" },
 ];
 

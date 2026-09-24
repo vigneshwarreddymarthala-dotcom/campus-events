@@ -11,6 +11,12 @@ import { Eye, EyeOff, GraduationCap, AlertCircle, CheckCircle2 } from "lucide-re
 
 const DEPARTMENTS = ["Computer Science", "Information Technology", "ECE", "EEE", "Mechanical", "Civil", "MBA", "Other"];
 const YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "Faculty"];
+const ALLOWED_EMAIL_DOMAINS = ["stud.fh-sm.de", "gmail.com"];
+
+function isAllowedEmail(email: string) {
+  const domain = email.split("@")[1]?.toLowerCase();
+  return !!domain && ALLOWED_EMAIL_DOMAINS.includes(domain);
+}
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -47,6 +53,10 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (!isAllowedEmail(form.email)) {
+      setError(`Please use a ${ALLOWED_EMAIL_DOMAINS.join(" or ")} email address.`);
+      return;
+    }
     if (form.password !== form.confirmPassword) {
       setError("Passwords do not match.");
       return;
@@ -107,16 +117,19 @@ export default function RegisterPage() {
 
             {/* Email */}
             <div>
-              <Label htmlFor="email">College Email</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="yourname@college.edu"
+                placeholder="yourname@stud.fh-sm.de"
                 value={form.email}
                 onChange={(e) => set("email", e.target.value)}
                 required
                 className="mt-1"
               />
+              <p className="text-xs text-gray-400 mt-1">
+                Use your {ALLOWED_EMAIL_DOMAINS.join(" or ")} email address.
+              </p>
             </div>
 
             {/* Department + Year */}

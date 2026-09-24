@@ -197,6 +197,214 @@ create policy "Users can manage own bookmarks"
 
 
 -- ============================================================
+-- Security fix: prevent self-promotion to admin
+-- Run this in the Supabase SQL Editor before onboarding real
+-- users. Without it, any signed-in user can grant themselves
+-- admin by either (a) updating their own profiles.role via the
+-- client SDK, or (b) passing role:"admin" in signUp() metadata.
+-- ============================================================
+
+-- 1. Signup trigger must never trust client-supplied role.
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer set search_path = public
+as $$
+begin
+  insert into public.profiles (id, name, email, role, department, year)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
+    new.email,
+    'student',
+    new.raw_user_meta_data->>'department',
+    new.raw_user_meta_data->>'year'
+  );
+  return new;
+end;
+$$;
+
+-- 2. Block role changes on UPDATE unless the actor is already an admin.
+create or replace function public.prevent_role_escalation()
+returns trigger language plpgsql security definer set search_path = public
+as $$
+begin
+  if new.role is distinct from old.role then
+    if not exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role = 'admin'
+    ) then
+      new.role = old.role;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_profiles_role_guard on public.profiles;
+create trigger on_profiles_role_guard
+  before update on public.profiles
+  for each row execute procedure public.prevent_role_escalation();
+
+-- 4. Restrict signup to approved email domains (edit the array to add more).
+create or replace function public.enforce_allowed_email_domain()
+returns trigger language plpgsql security definer set search_path = public
+as $$
+declare
+  allowed_domains text[] := array['stud.fh-sm.de', 'gmail.com'];
+  domain text;
+begin
+  domain := lower(split_part(new.email, '@', 2));
+  if domain = any(allowed_domains) then
+    return new;
+  end if;
+  raise exception 'Registration is restricted to % email addresses.', array_to_string(allowed_domains, ' or ');
+end;
+$$;
+
+drop trigger if exists on_auth_user_email_domain_check on auth.users;
+create trigger on_auth_user_email_domain_check
+  before insert on auth.users
+  for each row execute procedure public.enforce_allowed_email_domain();
+
+-- 3. Bootstrap the first admin (only works because no admin exists
+--    yet to gate it — after this, only an existing admin can promote
+--    someone else, via the admin panel or this same statement run
+--    from the SQL Editor, which bypasses RLS entirely).
+--    Sign up normally through the app first, THEN run:
+-- update public.profiles set role = 'admin' where email = 'your-email@example.com';
+
+
+-- ============================================================
+-- super_admin role: a tier above organizer that can see every
+-- organizer account and create new ones (the "universal admin" /
+-- CRM-style panel at /super-admin). Organizer accounts it creates
+-- are provisioned server-side via /api/super-admin/create-organizer
+-- using the service role key — never through client-side signUp(),
+-- which would sign the caller out of their own session.
+-- ============================================================
+
+alter table public.profiles drop constraint if exists profiles_role_check;
+alter table public.profiles add constraint profiles_role_check check (role in ('admin', 'student', 'super_admin'));
+
+-- IMPORTANT: a policy on `profiles` that subqueries `profiles` directly
+-- causes "infinite recursion detected in policy" in Postgres. Route the
+-- check through a SECURITY DEFINER function instead — as the table
+-- owner, it bypasses RLS internally, so no recursion.
+create or replace function public.current_user_role()
+returns text language sql security definer stable set search_path = public
+as $$
+  select role from public.profiles where id = auth.uid();
+$$;
+
+drop policy if exists "Admins can view all profiles" on public.profiles;
+drop policy if exists "Admins and super admins can view all profiles" on public.profiles;
+create policy "Admins and super admins can view all profiles"
+  on public.profiles for select
+  using (public.current_user_role() in ('admin', 'super_admin'));
+
+drop policy if exists "Super admins can update any profile" on public.profiles;
+create policy "Super admins can update any profile"
+  on public.profiles for update
+  using (public.current_user_role() = 'super_admin');
+
+-- Only a super_admin (checked via current_user_role(), not a raw
+-- subquery, for the same recursion reason) or a service-role request
+-- (our server API route) may change someone's role.
+create or replace function public.prevent_role_escalation()
+returns trigger language plpgsql security definer set search_path = public
+as $$
+begin
+  if new.role is distinct from old.role then
+    if public.current_user_role() = 'super_admin' or auth.role() = 'service_role' then
+      return new;
+    end if;
+    new.role = old.role;
+  end if;
+  return new;
+end;
+$$;
+
+-- Organizer accounts created by a super_admin bypass the email domain
+-- gate (they may be external partners/other departments).
+create or replace function public.enforce_allowed_email_domain()
+returns trigger language plpgsql security definer set search_path = public
+as $$
+declare
+  allowed_domains text[] := array['stud.fh-sm.de', 'gmail.com'];
+  domain text;
+begin
+  if auth.role() = 'service_role' then
+    return new;
+  end if;
+  domain := lower(split_part(new.email, '@', 2));
+  if domain = any(allowed_domains) then
+    return new;
+  end if;
+  raise exception 'Registration is restricted to % email addresses.', array_to_string(allowed_domains, ' or ');
+end;
+$$;
+
+-- Bootstrap the first super_admin the same way as the first admin above:
+-- update public.profiles set role = 'super_admin' where email = 'your-email@example.com';
+
+
+-- ============================================================
+-- event_head ("Team Head") role: created only by a super_admin
+-- (via /api/super-admin/create-organizer with role: "event_head").
+-- Can create exactly ONE event (enforced by the insert policy below)
+-- and fully manage it (edit, QR check-in, attendance, survey) via the
+-- /team-head area — scoped entirely by events.created_by, no separate
+-- assignment table needed.
+-- ============================================================
+
+alter table public.profiles drop constraint if exists profiles_role_check;
+alter table public.profiles add constraint profiles_role_check check (role in ('admin', 'student', 'super_admin', 'event_head'));
+
+create or replace function public.owns_event(p_event_id text)
+returns boolean language sql security definer stable set search_path = public
+as $$
+  select exists (
+    select 1 from public.events
+    where id = p_event_id and created_by = auth.uid()
+  );
+$$;
+
+drop policy if exists "Event heads can create one event" on public.events;
+create policy "Event heads can create one event"
+  on public.events for insert
+  with check (
+    public.current_user_role() = 'event_head'
+    and created_by = auth.uid()
+    and not exists (select 1 from public.events where created_by = auth.uid())
+  );
+
+drop policy if exists "Event heads can update their own event" on public.events;
+create policy "Event heads can update their own event"
+  on public.events for update
+  using (public.current_user_role() = 'event_head' and created_by = auth.uid());
+
+drop policy if exists "Event heads can view their event registrations" on public.registrations;
+create policy "Event heads can view their event registrations"
+  on public.registrations for select
+  using (public.owns_event(event_id));
+
+drop policy if exists "Event heads can update their event registrations" on public.registrations;
+create policy "Event heads can update their event registrations"
+  on public.registrations for update
+  using (public.owns_event(event_id));
+
+drop policy if exists "Event heads can view their event surveys" on public.event_surveys;
+create policy "Event heads can view their event surveys"
+  on public.event_surveys for select
+  using (public.owns_event(event_id));
+
+drop policy if exists "Event heads can manage their event survey questions" on public.survey_questions;
+create policy "Event heads can manage their event survey questions"
+  on public.survey_questions for all
+  using (public.owns_event(event_id))
+  with check (public.owns_event(event_id));
+
+
+-- ============================================================
 -- Seed: Demo Users (run after schema, before app use)
 -- These must be created via Supabase Auth, then profiles
 -- updated. Use the app's register flow or Supabase dashboard.

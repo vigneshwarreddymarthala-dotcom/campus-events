@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, GraduationCap, AlertCircle, Shield, User } from "lucide-react";
+import { Eye, EyeOff, GraduationCap, AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
   return (
@@ -27,23 +27,6 @@ function LoginPageInner() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const autoAs = searchParams.get("as");
-    if (!autoAs) return;
-    const creds: Record<string, [string, string]> = {
-      admin: ["admin@college.edu", "admin123"],
-      student: ["student@college.edu", "student123"],
-    };
-    const pair = creds[autoAs];
-    if (!pair) return;
-    setLoading(true);
-    login(pair[0], pair[1]).then((r) => {
-      setLoading(false);
-      if (r.success) router.push(searchParams.get("redirect") ?? "/");
-      else setError(r.error ?? "Login failed.");
-    });
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -55,24 +38,7 @@ function LoginPageInner() {
       return;
     }
     // redirect handled by root page, but push manually based on role
-    router.push("/");
-  };
-
-  const quickLogin = async (role: "admin" | "student") => {
-    const creds: Record<string, [string, string]> = {
-      admin: ["admin@college.edu", "admin123"],
-      student: ["student@college.edu", "student123"],
-    };
-    const [quickEmail, quickPassword] = creds[role];
-    setError("");
-    setLoading(true);
-    const result = await login(quickEmail, quickPassword);
-    setLoading(false);
-    if (!result.success) {
-      setError(result.error ?? "Login failed.");
-      return;
-    }
-    router.push("/");
+    router.push(searchParams.get("redirect") ?? "/");
   };
 
   return (
@@ -116,44 +82,13 @@ function LoginPageInner() {
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h2>
           <p className="text-gray-500 mb-8">Sign in to your college account</p>
 
-          {/* Quick role login */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            <button
-              type="button"
-              onClick={() => quickLogin("admin")}
-              disabled={loading}
-              className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 py-4 px-3 hover:border-indigo-400 hover:bg-indigo-50 transition-colors disabled:opacity-60"
-            >
-              <Shield className="w-5 h-5 text-indigo-600" />
-              <span className="text-sm font-medium text-gray-900">Organiser</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => quickLogin("student")}
-              disabled={loading}
-              className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 py-4 px-3 hover:border-indigo-400 hover:bg-indigo-50 transition-colors disabled:opacity-60"
-            >
-              <User className="w-5 h-5 text-indigo-600" />
-              <span className="text-sm font-medium text-gray-900">Student</span>
-            </button>
-          </div>
-
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="bg-white px-2 text-gray-400">or sign in with email</span>
-            </div>
-          </div>
-
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <Label htmlFor="email">College Email</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="yourname@college.edu"
+                placeholder="yourname@stud.fh-sm.de"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

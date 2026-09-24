@@ -31,8 +31,16 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAdminRoute = pathname.startsWith("/admin");
   const isStudentRoute = pathname.startsWith("/student");
-  const isProtected = isAdminRoute || isStudentRoute;
+  const isSuperAdminRoute = pathname.startsWith("/super-admin");
+  const isTeamHeadRoute = pathname.startsWith("/team-head");
+  const isProtected = isAdminRoute || isStudentRoute || isSuperAdminRoute || isTeamHeadRoute;
   const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/register");
+
+  const homeFor = (role: string) =>
+    role === "super_admin" ? "/super-admin" :
+    role === "event_head" ? "/team-head" :
+    role === "admin" ? "/admin" :
+    "/student/events";
 
   // Unauthenticated user hitting a protected route → login
   if (!user && isProtected) {
@@ -60,12 +68,22 @@ export async function middleware(request: NextRequest) {
 
     if (isAdminRoute && role !== "admin") {
       const url = request.nextUrl.clone();
-      url.pathname = "/student/events";
+      url.pathname = homeFor(role);
       return NextResponse.redirect(url);
     }
-    if (isStudentRoute && role === "admin") {
+    if (isStudentRoute && role !== "student") {
       const url = request.nextUrl.clone();
-      url.pathname = "/admin";
+      url.pathname = homeFor(role);
+      return NextResponse.redirect(url);
+    }
+    if (isSuperAdminRoute && role !== "super_admin") {
+      const url = request.nextUrl.clone();
+      url.pathname = homeFor(role);
+      return NextResponse.redirect(url);
+    }
+    if (isTeamHeadRoute && role !== "event_head") {
+      const url = request.nextUrl.clone();
+      url.pathname = homeFor(role);
       return NextResponse.redirect(url);
     }
   }

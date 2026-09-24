@@ -4,12 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { type Event } from "@/lib/mock-data";
 import { createEvent } from "@/lib/db";
+import { useAuth } from "@/contexts/auth-context";
 import EventForm from "@/components/shared/EventForm";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 export default function NewEventPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (data: Partial<Event>) => {
@@ -33,7 +35,7 @@ export default function NewEventPage() {
       tags: data.tags ?? [],
       banner_image: data.bannerImage ?? "",
       requirements: [],
-      created_by: null,
+      created_by: user?.id ?? null,
     };
     try {
       await createEvent({ ...base, banner_link: data.bannerLink || null, ticket_url: data.ticketUrl || null });

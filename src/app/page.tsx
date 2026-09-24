@@ -60,7 +60,12 @@ export default function Home() {
 
   useEffect(() => {
     if (isLoading || !user) return;
-    router.push(user.role === "admin" ? "/admin" : "/student/events");
+    const destination =
+      user.role === "super_admin" ? "/super-admin" :
+      user.role === "event_head" ? "/team-head" :
+      user.role === "admin" ? "/admin" :
+      "/student/events";
+    router.push(destination);
   }, [user, isLoading, router]);
 
   if (isLoading || user) {

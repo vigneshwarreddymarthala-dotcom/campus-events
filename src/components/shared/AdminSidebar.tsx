@@ -21,6 +21,7 @@ const NAV = [
     items: [
       { href: "/admin/events", label: "Events", icon: CalendarDays },
       { href: "/admin/students", label: "Students", icon: Users },
+      { href: "/admin/jobs", label: "Jobs", icon: GraduationCap },
     ],
   },
   {

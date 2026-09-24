@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
-export type UserRole = "admin" | "student";
+export type UserRole = "admin" | "student" | "super_admin" | "event_head";
 
 export type User = {
   id: string;

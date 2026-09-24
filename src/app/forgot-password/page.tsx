@@ -2,21 +2,31 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GraduationCap, ArrowLeft, Mail, CheckCircle2 } from "lucide-react";
+import { GraduationCap, ArrowLeft, Mail, CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1000));
+    const supabase = createClient();
+    const { error: e2 } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
     setLoading(false);
+    if (e2) {
+      setError(e2.message);
+      return;
+    }
     setSent(true);
   };
 
@@ -43,17 +53,24 @@ export default function ForgotPasswordPage() {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="email">College Email</Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="yourname@college.edu"
+                    placeholder="yourname@stud.fh-sm.de"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     className="mt-1"
                   />
                 </div>
+
+                {error && (
+                  <div className="flex items-center gap-2 text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 text-sm">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    {error}
+                  </div>
+                )}
 
                 <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={loading}>
                   {loading ? (

@@ -9,6 +9,17 @@ async function assertAdmin(): Promise<void> {
   if (data?.role !== "admin") throw new Error("Forbidden: admin only");
 }
 
+// Organizers have full access; event_head accounts may only touch the
+// event they own — actual scoping is enforced by RLS, this is just the
+// friendly client-side gate matching assertAdmin's shape.
+async function assertCanManageEvents(): Promise<void> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+  const { data } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (data?.role !== "admin" && data?.role !== "event_head") throw new Error("Forbidden: organizer only");
+}
+
 export function adaptDbEvent(e: DbEvent, registrationCount = 0): Event {
   let parsedStatus = e.status as Event["status"];
   let publishAt: string | undefined = e.publish_at ?? undefined;
@@ -19,7 +30,21 @@ export function adaptDbEvent(e: DbEvent, registrationCount = 0): Event {
   }
 
   if (publishAt && new Date() >= new Date(publishAt)) {
-    parsedStatus = (new Date(`${e.end_date || e.date}T${e.time}:00`) < new Date()) ? "completed" : "upcoming";
+    try {
+      const match = (e.time ?? "23:59").match(/^(\d{1,2}):(\d{2})/);
+      const timeFormatted = match ? `${match[1].padStart(2, '0')}:${match[2]}` : "23:59";
+      const eventDate = new Date(`${e.end_date || e.date}T${timeFormatted}:00`);
+      
+      if (isNaN(eventDate.getTime())) {
+        const justDate = new Date(e.end_date || e.date);
+        justDate.setHours(23, 59, 59);
+        parsedStatus = justDate < new Date() ? "completed" : "upcoming";
+      } else {
+        parsedStatus = eventDate < new Date() ? "completed" : "upcoming";
+      }
+    } catch (err) {
+      parsedStatus = "upcoming";
+    }
   } else if (publishAt && new Date() < new Date(publishAt)) {
     parsedStatus = "scheduled";
   }
@@ -138,7 +163,7 @@ export async function getAdaptedEvent(id: string): Promise<Event | null> {
 }
 
 export async function createEvent(payload: Omit<DbEvent, "id" | "created_at" | "updated_at">): Promise<DbEvent> {
-  await assertAdmin();
+  await assertCanManageEvents();
   const supabase = createClient();
   const { data, error } = await supabase
     .from("events")
@@ -150,7 +175,7 @@ export async function createEvent(payload: Omit<DbEvent, "id" | "created_at" | "
 }
 
 export async function updateEvent(id: string, payload: Partial<DbEvent>): Promise<DbEvent> {
-  await assertAdmin();
+  await assertCanManageEvents();
   const supabase = createClient();
   const { data, error } = await supabase
     .from("events")
@@ -276,7 +301,7 @@ export async function isRegisteredForEvent(eventId: string): Promise<boolean> {
 }
 
 export async function toggleAttendance(registrationId: string, attended: boolean): Promise<void> {
-  await assertAdmin();
+  await assertCanManageEvents();
   const supabase = createClient();
   const { error } = await supabase
     .from("registrations")
@@ -371,7 +396,7 @@ export async function addSurveyQuestion(
   required: boolean,
   sortOrder: number
 ): Promise<DbSurveyQuestion> {
-  await assertAdmin();
+  await assertCanManageEvents();
   const supabase = createClient();
   const { data, error } = await supabase
     .from("survey_questions")
@@ -383,14 +408,14 @@ export async function addSurveyQuestion(
 }
 
 export async function deleteSurveyQuestion(id: string): Promise<void> {
-  await assertAdmin();
+  await assertCanManageEvents();
   const supabase = createClient();
   const { error } = await supabase.from("survey_questions").delete().eq("id", id);
   if (error) throw error;
 }
 
 export async function updateSurveyQuestion(id: string, updates: Partial<Pick<DbSurveyQuestion, "question" | "type" | "required" | "sort_order">>): Promise<void> {
-  await assertAdmin();
+  await assertCanManageEvents();
   const supabase = createClient();
   const { error } = await supabase.from("survey_questions").update(updates).eq("id", id);
   if (error) throw error;
@@ -550,6 +575,29 @@ export async function getAllStudents(): Promise<DbProfile[]> {
     .order("name", { ascending: true });
   if (error) throw error;
   return data ?? [];
+}
+
+export async function getAllOrganizers(): Promise<DbProfile[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .in("role", ["admin", "event_head"])
+    .order("name", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getMyEventId(userId: string): Promise<string | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("events")
+    .select("id")
+    .eq("created_by", userId)
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.id ?? null;
 }
 
 export async function getStudentRegistrationsWithEvents(userId: string): Promise<StudentRegistrationWithEvent[]> {

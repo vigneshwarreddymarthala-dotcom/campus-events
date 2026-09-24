@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { getEvents } from "@/lib/db";
+import { getEvents, deleteEvent, createEvent } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CheckCircle2, Loader2, AlertCircle, Database, Users, RefreshCw } from "lucide-react";
+import { CheckCircle2, Loader2, AlertCircle, Database, Users, RefreshCw, Trash2, ShieldOff } from "lucide-react";
 
 const PASSWORD = "Student@123";
 
@@ -46,6 +46,145 @@ const IMPROVE = [
   null,
 ];
 
+const REAL_EVENTS = [
+  {
+    title: "Career Fair Prep & Resume Review",
+    description: "Get your resume reviewed by industry experts and prepare for the upcoming engineering career fair.",
+    date: "2026-08-20",
+    time: "14:00",
+    venue: "Student Union, Hall B",
+    category: "workshop",
+    status: "completed",
+    capacity: 100,
+    registration_fee: 0,
+    organizer_name: "Career Services",
+    organizer_email: "careers@college.edu",
+    organizer_department: "Student Affairs",
+    tags: ["Career", "Resume", "Workshop"],
+    banner_image: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=800&q=80",
+    requirements: ["Bring a printed copy of your resume"]
+  },
+  {
+    title: "Guest Lecture: The Future of AI in Tech",
+    description: "Join us for an insightful lecture by industry leaders on how artificial intelligence is reshaping software engineering.",
+    date: "2026-08-24",
+    time: "10:00",
+    venue: "Main Auditorium",
+    category: "seminar",
+    status: "completed",
+    capacity: 250,
+    registration_fee: 0,
+    organizer_name: "Computer Science Dept",
+    organizer_email: "cs@college.edu",
+    organizer_department: "Computer Science",
+    tags: ["AI", "Tech", "Lecture"],
+    banner_image: "https://images.unsplash.com/photo-1593508512255-86ab42a8e620?w=800&q=80",
+    requirements: []
+  },
+  {
+    title: "Campus Welcome Party 2026",
+    description: "Kick off the fall semester with food, music, and games! Meet new friends and discover campus clubs.",
+    date: "2026-08-26",
+    time: "17:00",
+    venue: "Main Quad",
+    category: "cultural",
+    status: "completed",
+    capacity: 500,
+    registration_fee: 5,
+    organizer_name: "Student Government",
+    organizer_email: "sga@college.edu",
+    organizer_department: "Student Affairs",
+    tags: ["Social", "Welcome", "Party"],
+    banner_image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80",
+    requirements: ["Bring your student ID"]
+  },
+  {
+    title: "Intro to Open Source Hackathon",
+    description: "A 12-hour beginner-friendly hackathon to introduce you to Git, GitHub, and contributing to open source projects.",
+    date: "2026-08-28",
+    time: "09:00",
+    venue: "Library Makerspace",
+    category: "hackathon",
+    status: "completed",
+    capacity: 80,
+    registration_fee: 0,
+    organizer_name: "Open Source Club",
+    organizer_email: "opensource@college.edu",
+    organizer_department: "Clubs",
+    tags: ["Hackathon", "Open Source", "Coding"],
+    banner_image: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&q=80",
+    requirements: ["Bring your laptop", "Install Git"]
+  },
+  {
+    title: "Tech Startup Pitch Night",
+    description: "Watch student founders pitch their startup ideas to a panel of alumni investors for a chance to win funding.",
+    date: "2026-09-05",
+    time: "18:00",
+    venue: "Business School Auditorium",
+    category: "competition",
+    status: "upcoming",
+    capacity: 150,
+    registration_fee: 0,
+    organizer_name: "Entrepreneurship Cell",
+    organizer_email: "ecell@college.edu",
+    organizer_department: "Clubs",
+    tags: ["Startup", "Pitch", "Business"],
+    banner_image: "https://images.unsplash.com/photo-1556761175-4b46a572b786?w=800&q=80",
+    requirements: []
+  },
+  {
+    title: "Annual Engineering Career Fair",
+    description: "Connect with recruiters from over 50 top tech companies offering internships and full-time roles.",
+    date: "2026-09-12",
+    time: "10:00",
+    venue: "Indoor Stadium",
+    category: "cultural",
+    status: "upcoming",
+    capacity: 1000,
+    registration_fee: 0,
+    organizer_name: "Career Services",
+    organizer_email: "careers@college.edu",
+    organizer_department: "Student Affairs",
+    tags: ["Career Fair", "Jobs", "Engineering"],
+    banner_image: "https://images.unsplash.com/photo-1560523159-4a9692d222f9?w=800&q=80",
+    requirements: ["Business casual attire", "Multiple copies of resume"]
+  },
+  {
+    title: "Web3 & Blockchain Workshop",
+    description: "Learn the fundamentals of blockchain technology and write your first smart contract in Solidity.",
+    date: "2026-09-18",
+    time: "15:00",
+    venue: "Computer Center, Lab 3",
+    category: "workshop",
+    status: "upcoming",
+    capacity: 50,
+    registration_fee: 10,
+    organizer_name: "Blockchain Club",
+    organizer_email: "blockchain@college.edu",
+    organizer_department: "Clubs",
+    tags: ["Web3", "Blockchain", "Coding"],
+    banner_image: "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?w=800&q=80",
+    requirements: ["Basic programming knowledge"]
+  },
+  {
+    title: "Alumni Networking Mixer",
+    description: "An evening of networking and mentorship with distinguished alumni from various industries.",
+    date: "2026-09-25",
+    time: "19:00",
+    venue: "University Hotel Banquet",
+    category: "seminar",
+    status: "upcoming",
+    capacity: 200,
+    registration_fee: 25,
+    organizer_name: "Alumni Association",
+    organizer_email: "alumni@college.edu",
+    organizer_department: "Alumni",
+    tags: ["Networking", "Alumni", "Mixer"],
+    banner_image: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&q=80",
+    requirements: ["Register by Sep 15"]
+  }
+];
+
 type LogEntry = { text: string; type: "info" | "success" | "error" | "warn" };
 
 function isPast(dateStr: string) {
@@ -59,6 +198,7 @@ export default function SeedPage() {
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [hardReset, setHardReset] = useState(false);
 
   function log(text: string, type: LogEntry["type"] = "info") {
     setLogs((prev) => [...prev, { text, type }]);
@@ -70,6 +210,40 @@ export default function SeedPage() {
     setLogs([]);
 
     const supabase = createClient();
+
+    if (hardReset) {
+      log("HARD RESET: Fetching all existing events...", "warn");
+      try {
+        const existingEvents = await getEvents();
+        log(`Found ${existingEvents.length} events to delete.`, "warn");
+        
+        for (const ev of existingEvents) {
+          log(`Deleting event: ${ev.title}...`);
+          await deleteEvent(ev.id);
+        }
+        
+        log("Existing events deleted successfully.", "success");
+        
+        log("Inserting 8 real-world events...", "info");
+        for (const realEv of REAL_EVENTS) {
+          log(`Creating event: ${realEv.title}...`);
+          await createEvent({
+            ...realEv,
+            end_date: null,
+            end_time: null,
+            banner_link: null,
+            ticket_url: null,
+            created_by: null,
+            publish_at: null,
+          });
+        }
+        log("Successfully created 8 realistic events!", "success");
+      } catch (err: any) {
+        log(`Hard reset failed: ${err.message}`, "error");
+        setRunning(false);
+        return;
+      }
+    }
 
     log("Loading events from database...");
     let events: Awaited<ReturnType<typeof getEvents>>;
@@ -95,7 +269,6 @@ export default function SeedPage() {
       const student = FAKE_STUDENTS[i];
       log(`\n[${i + 1}/${FAKE_STUDENTS.length}] ${student.name} (${student.email})`);
 
-      // Try signUp; fall back to signIn if account already exists
       let userId: string | null = null;
 
       const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
@@ -132,7 +305,6 @@ export default function SeedPage() {
       }
 
       if (!userId) {
-        // Session might be pending email confirmation — try to get current user
         const { data: { user } } = await supabase.auth.getUser();
         userId = user?.id ?? null;
       }
@@ -144,7 +316,6 @@ export default function SeedPage() {
 
       log(`  → User ID: ${userId.slice(0, 8)}...`, "success");
 
-      // Upsert profile (trigger may have created it; ensure all fields are set)
       await supabase.from("profiles").upsert({
         id: userId,
         name: student.name,
@@ -155,7 +326,6 @@ export default function SeedPage() {
         phone: student.phone,
       });
 
-      // Pick events for this student (varied selection per student)
       const myPast = pastEvents.filter((_, idx) => (idx + i) % 3 !== 2).slice(0, Math.min(5, pastEvents.length));
       const myUpcoming = upcomingEvents.filter((_, idx) => (idx + i) % 2 === 0).slice(0, Math.min(3, upcomingEvents.length));
       const myEvents = [...myPast, ...myUpcoming];
@@ -167,10 +337,8 @@ export default function SeedPage() {
         const event = myEvents[j];
         const eventIsPast = isPast(event.date);
 
-        // Attendance pattern: ~65% attended, varied by student+event index
         const attended = eventIsPast ? (i + j) % 3 !== 0 : false;
 
-        // registered_at: a few days before the event
         const eventDate = new Date(event.date);
         const regDate = new Date(eventDate);
         regDate.setDate(regDate.getDate() - (3 + (j % 4)));
@@ -198,9 +366,8 @@ export default function SeedPage() {
           regCount++;
         }
 
-        // Insert survey for attended past events
         if (attended && eventIsPast) {
-          const rating = 3 + (j % 3); // 3, 4, or 5
+          const rating = 3 + (j % 3);
           const orgRating = 3 + ((j + 1) % 3);
           const { error: survErr } = await supabase.from("event_surveys").insert({
             event_id: event.id,
@@ -221,7 +388,6 @@ export default function SeedPage() {
 
       log(`  → ${regCount} registrations, ${surveyCount} surveys`, "success");
 
-      // Wait between students to avoid Supabase auth rate limits
       if (i < FAKE_STUDENTS.length - 1) {
         log("  → Waiting 2s before next signup...");
         await delay(2000);
@@ -239,6 +405,18 @@ export default function SeedPage() {
       await supabase.auth.signOut();
       router.push("/login");
     }, 5000);
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <Card className="p-8 text-center space-y-3">
+          <ShieldOff className="w-10 h-10 text-gray-300 mx-auto" />
+          <h1 className="text-lg font-semibold text-gray-900">Not available in production</h1>
+          <p className="text-sm text-gray-500">This tool can wipe live event data and is disabled outside development.</p>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -260,9 +438,30 @@ export default function SeedPage() {
             <div>
               <p className="font-semibold">This will sign you out when complete</p>
               <p className="mt-1 text-amber-700">
-                The seed process creates accounts by signing in as each student. After seeding, you&apos;ll be redirected to login — sign back in as admin.
+                The seed process creates accounts by signing in as each student. After seeding, you'll be redirected to login — sign back in as admin.
               </p>
             </div>
+          </div>
+
+          <div className="bg-gray-50 rounded-xl p-4 space-y-3 border border-gray-200">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <div className="pt-1">
+                <input
+                  type="checkbox"
+                  checked={hardReset}
+                  onChange={(e) => setHardReset(e.target.checked)}
+                  className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500"
+                />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-red-700 flex items-center gap-1.5">
+                  <Trash2 className="w-4 h-4" /> Hard Reset Database First
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  If checked, this will <strong>DELETE ALL EXISTING EVENTS</strong>, wipe the database completely, and insert 8 brand new, highly-realistic college events (4 past, 4 upcoming) before seeding the student data.
+                </p>
+              </div>
+            </label>
           </div>
 
           <div className="bg-gray-50 rounded-xl p-4 space-y-3">
@@ -279,15 +478,11 @@ export default function SeedPage() {
                 </div>
               ))}
             </div>
-            <div className="mt-2 pt-3 border-t border-gray-200 text-xs text-gray-500 space-y-1">
-              <p>Password for all accounts: <code className="bg-white border border-gray-200 px-1.5 py-0.5 rounded font-mono">{PASSWORD}</code></p>
-              <p>Each student gets 4–7 event registrations with mixed attendance.</p>
-            </div>
           </div>
 
-          <Button onClick={runSeed} className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2">
+          <Button onClick={runSeed} className={`w-full ${hardReset ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'} gap-2`}>
             <Database className="w-4 h-4" />
-            Run Seed Data
+            {hardReset ? "Hard Reset & Seed Application" : "Run Seed Data"}
           </Button>
         </Card>
       )}
