@@ -34,9 +34,9 @@ export default function CreateJobPage() {
       await createJob(payload);
       router.push("/admin/jobs");
       router.refresh();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Failed to create job. Are you sure the jobs table exists in Supabase?");
+      alert(`Failed to create job.\nError: ${err.message || JSON.stringify(err)}`);
       setSaving(false);
     }
   }

@@ -88,6 +88,9 @@ export default function Home() {
             <span className="font-bold text-gray-900">CampusEvents</span>
           </div>
           <div className="flex items-center gap-4">
+            <Link href="/jobs" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+              Jobs
+            </Link>
             <Link href="/login" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
               Log in
             </Link>

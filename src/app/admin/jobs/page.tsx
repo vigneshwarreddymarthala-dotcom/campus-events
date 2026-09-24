@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getJobs, deleteJob, type DbJob } from "@/lib/jobs";
 import { Button } from "@/components/ui/button";
-import { Plus, Briefcase, MapPin, Building, Trash2, ExternalLink, Calendar } from "lucide-react";
+import { Plus, Briefcase, MapPin, Building, Trash2, ExternalLink, Calendar, Users } from "lucide-react";
 import { format } from "date-fns";
 
 export default function AdminJobsPage() {
@@ -83,14 +83,22 @@ export default function AdminJobsPage() {
                 )}
               </div>
 
-              <div className="mt-auto pt-5">
-                <a 
-                  href={job.apply_link || "#"} 
-                  target="_blank"
-                  className="flex items-center justify-center gap-2 w-full py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium rounded-xl transition-colors text-sm border border-gray-200"
+              <div className="mt-auto pt-5 space-y-2">
+                <Link
+                  href={`/admin/jobs/${job.id}/applicants`}
+                  className="flex items-center justify-center gap-2 w-full py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium rounded-xl transition-colors text-sm border border-indigo-100"
                 >
-                  View Details <ExternalLink className="w-3.5 h-3.5" />
-                </a>
+                  View Applicants <Users className="w-4 h-4" />
+                </Link>
+                {job.apply_link && (
+                  <a 
+                    href={job.apply_link} 
+                    target="_blank"
+                    className="flex items-center justify-center gap-2 w-full py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium rounded-xl transition-colors text-sm border border-gray-200"
+                  >
+                    External Link <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                )}
               </div>
             </div>
           ))}

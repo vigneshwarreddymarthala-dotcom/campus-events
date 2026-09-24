@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Briefcase, MapPin, Building, ExternalLink, Calendar, DollarSign, Search } from "lucide-react";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
+import { ApplyJobModal } from "@/components/shared/ApplyJobModal";
 
 export default function StudentJobsPage() {
   const [jobs, setJobs] = useState<DbJob[] | null>(null);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [applyJob, setApplyJob] = useState<DbJob | null>(null);
 
   useEffect(() => {
     getJobs().then(setJobs).catch(console.error);
@@ -119,18 +121,18 @@ export default function StudentJobsPage() {
               </div>
 
               <div className="mt-auto pt-2">
-                <a 
-                  href={job.apply_link || "#"}
-                  target="_blank"
+                <button 
+                  onClick={() => setApplyJob(job)}
                   className="w-full flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3 rounded-xl transition-colors"
                 >
                   Apply Now <ExternalLink className="w-4 h-4" />
-                </a>
+                </button>
               </div>
             </div>
           ))}
         </div>
       )}
+      <ApplyJobModal job={applyJob} open={!!applyJob} onOpenChange={(open) => { if(!open) setApplyJob(null); }} />
     </div>
   );
 }
