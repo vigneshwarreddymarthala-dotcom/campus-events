@@ -57,11 +57,12 @@ export default function AdminStudentsPage() {
       </div>
 
       {/* Summary stats */}
-      <div className="grid grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
           { label: "Total Students", value: students.length, icon: Users, color: "text-indigo-600", bg: "bg-indigo-50" },
           { label: "Total Registrations", value: students.reduce((a, s) => a + s.totalRegistered, 0), icon: GraduationCap, color: "text-blue-600", bg: "bg-blue-50" },
           { label: "Total Attendances", value: totalAttended, icon: CheckCircle, color: "text-green-600", bg: "bg-green-50" },
+          { label: "Total Absences", value: students.reduce((a, s) => a + (s.totalRegistered - s.totalAttended), 0), icon: Users, color: "text-red-600", bg: "bg-red-50" },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-2xl border border-gray-200 p-4 flex items-center gap-3">
             <div className={`w-10 h-10 ${s.bg} rounded-xl flex items-center justify-center shrink-0`}>
@@ -99,11 +100,12 @@ export default function AdminStudentsPage() {
         ) : (
           <div className="divide-y divide-gray-100">
             {/* Table header */}
-            <div className="hidden sm:grid grid-cols-[1fr_1fr_auto_auto_auto] gap-4 px-5 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <div className="hidden sm:grid grid-cols-[1fr_1fr_auto_auto_auto_auto] gap-4 px-5 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
               <span>Name / Email</span>
               <span>Department</span>
               <span className="text-center">Registered</span>
               <span className="text-center">Attended</span>
+              <span className="text-center">Absences</span>
               <span />
             </div>
 
@@ -111,7 +113,7 @@ export default function AdminStudentsPage() {
               <button
                 key={s.id}
                 onClick={() => router.push(`/admin/students/${s.id}`)}
-                className="w-full text-left px-5 py-4 hover:bg-indigo-50 transition-colors flex sm:grid sm:grid-cols-[1fr_1fr_auto_auto_auto] items-center gap-4"
+                className="w-full text-left px-5 py-4 hover:bg-indigo-50 transition-colors flex sm:grid sm:grid-cols-[1fr_1fr_auto_auto_auto_auto] items-center gap-4"
               >
                 {/* Avatar + name */}
                 <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -141,11 +143,16 @@ export default function AdminStudentsPage() {
                   <span className="text-sm font-semibold text-green-600">{s.totalAttended}</span>
                   <span className="text-xs text-gray-400">attended</span>
                 </div>
+                <div className="hidden sm:flex flex-col items-center">
+                  <span className="text-sm font-semibold text-red-500">{s.totalRegistered - s.totalAttended}</span>
+                  <span className="text-xs text-gray-400">absences</span>
+                </div>
 
                 {/* Mobile stats */}
                 <div className="sm:hidden flex items-center gap-3 shrink-0 text-xs text-gray-500">
                   <span>{s.totalRegistered} reg</span>
                   <span className="text-green-600">{s.totalAttended} att</span>
+                  <span className="text-red-500">{s.totalRegistered - s.totalAttended} abs</span>
                 </div>
 
                 <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />

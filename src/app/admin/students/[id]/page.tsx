@@ -118,10 +118,11 @@ export default function StudentReportPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* Summary stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "Events Registered", value: regs.length, icon: Calendar, color: "text-indigo-600", bg: "bg-indigo-50" },
           { label: "Events Attended", value: attended.length, icon: CheckCircle, color: "text-green-600", bg: "bg-green-50" },
+          { label: "Total Absences", value: regs.length - attended.length, icon: User, color: "text-red-500", bg: "bg-red-50" },
           { label: "Total Hours", value: `${totalHours}h`, icon: Clock, color: "text-blue-600", bg: "bg-blue-50" },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-2xl border border-gray-200 p-4 flex flex-col items-center gap-1.5">
