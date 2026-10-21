@@ -161,7 +161,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <Label htmlFor="studyProgram">Was studierst du? - What do you study / name of current study program?</Label>
+              <Label htmlFor="studyProgram" className="leading-snug">Was studierst du? - What do you study / name of current study program?</Label>
               <select
                 id="studyProgram"
                 value={form.studyProgram}
@@ -174,7 +174,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <Label htmlFor="studentStatus">Welchen Studentenstatus hast du? - What is your student status?</Label>
+              <Label htmlFor="studentStatus" className="leading-snug">Welchen Studentenstatus hast du? - What is your student status?</Label>
               <select
                 id="studentStatus"
                 value={form.studentStatus}
@@ -187,7 +187,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <Label htmlFor="germanLevel">Wie gut sind Ihre Deutschkenntnisse? - What is your level of proficiency in the German language?</Label>
+              <Label htmlFor="germanLevel" className="leading-snug">Wie gut sind Ihre Deutschkenntnisse? - What is your level of proficiency in the German language?</Label>
               <select
                 id="germanLevel"
                 value={form.germanLevel}
