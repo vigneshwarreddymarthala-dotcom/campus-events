@@ -286,7 +286,7 @@ export default function EventForm({ initial, onSubmit, submitLabel }: Props) {
                       <>
                         <Upload className="w-6 h-6" />
                         <span className="text-sm font-medium">Click to upload · or paste (⌘V)</span>
-                        <span className="text-xs">PNG, JPG, WEBP up to 10 MB</span>
+                        <span className="text-xs">PNG, JPG, WEBP, GIF up to 4 MB</span>
                       </>
                     )}
                   </button>
