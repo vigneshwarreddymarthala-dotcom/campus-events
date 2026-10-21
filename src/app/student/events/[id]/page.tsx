@@ -15,6 +15,7 @@ import {
   Bookmark, BookmarkCheck, Share2, ExternalLink, CheckCircle2,
   AlertCircle, FileText, Tag, History, ClipboardList,
 } from "lucide-react";
+import { EventImage } from "@/components/shared/EventImage";
 
 export default function StudentEventDetailPage({ params }: PageProps<"/student/events/[id]">) {
   return (
@@ -162,10 +163,10 @@ function StudentEventDetailPageInner({ params }: { params: PageProps<"/student/e
           <div className="relative rounded-2xl overflow-hidden h-64 sm:h-80 bg-gray-100">
             {event.bannerLink ? (
               <a href={event.bannerLink} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
-                <img src={event.bannerImage} alt={event.title} className="w-full h-full object-cover" />
+                <EventImage src={event.bannerImage} alt={event.title} className="w-full h-full object-cover" />
               </a>
             ) : (
-              <img src={event.bannerImage} alt={event.title} className="w-full h-full object-cover" />
+              <EventImage src={event.bannerImage} alt={event.title} className="w-full h-full object-cover" />
             )}
             <div className="absolute top-4 left-4">
               <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${CATEGORY_COLORS[event.category]}`}>

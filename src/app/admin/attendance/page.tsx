@@ -7,6 +7,7 @@ import { getAdaptedEvents, getEventRegistrations, type DbRegistration } from "@/
 import { type Event, isEventPast } from "@/lib/mock-data";
 import { CheckCircle2, XCircle, Users, TrendingUp, CalendarDays, Search, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { EventImage } from "@/components/shared/EventImage";
 
 type EventSummary = {
   event: Event;
@@ -157,7 +158,7 @@ export default function AttendancePage() {
               <Link key={event.id} href={`/admin/events/${event.id}/registrants`}>
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-indigo-200 hover:shadow-md transition-all group p-4">
                   <div className="flex items-center gap-4">
-                    <img src={event.bannerImage} alt={event.title} className="w-12 h-12 rounded-xl object-cover shrink-0" />
+                    <EventImage src={event.bannerImage} alt={event.title} className="w-12 h-12 rounded-xl object-cover shrink-0" />
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">

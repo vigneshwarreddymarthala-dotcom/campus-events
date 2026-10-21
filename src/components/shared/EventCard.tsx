@@ -4,6 +4,7 @@ import Link from "next/link";
 import { format, differenceInDays, isToday, isTomorrow } from "date-fns";
 import { Event, CATEGORY_COLORS, isEventPast, getEventStatus } from "@/lib/mock-data";
 import { MapPin, Bookmark, BookmarkCheck, Users, Clock } from "lucide-react";
+import { EventImage } from "@/components/shared/EventImage";
 
 type Props = {
   event: Event;
@@ -48,7 +49,7 @@ export default function EventCard({
       <Link href={`/${basePath}/events/${event.id}`} className="block group">
         <div className="bg-white rounded-2xl border border-gray-100 flex gap-4 p-3 hover:border-indigo-200 hover:shadow-sm transition-all">
           <div className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-gray-100">
-            <img src={event.bannerImage} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            <EventImage src={event.bannerImage} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
             {isPast && <div className="absolute inset-0 bg-black/30" />}
           </div>
           <div className="flex-1 min-w-0 py-0.5">
@@ -110,11 +111,7 @@ export default function EventCard({
 
         {/* Banner — tall, full bleed */}
         <div className="relative h-48 bg-gray-100 overflow-hidden">
-          <img
-            src={event.bannerImage}
-            alt={event.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
+          <EventImage src={event.bannerImage} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
 
           {/* dim overlay for past events */}
           {isPast && <div className="absolute inset-0 bg-black/30" />}

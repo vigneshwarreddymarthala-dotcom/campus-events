@@ -14,6 +14,7 @@ import {
   CalendarDays, Users, TrendingUp, Plus, ArrowRight,
   Clock, Star, CheckCircle2, BarChart2, Zap,
 } from "lucide-react";
+import { EventImage } from "@/components/shared/EventImage";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -110,7 +111,7 @@ export default function AdminDashboard() {
             {todaysEvents.map((e) => (
               <Link key={e.id} href={`/admin/events/${e.id}`}>
                 <div className="flex items-center gap-3 bg-white/10 hover:bg-white/20 transition-colors rounded-xl p-3">
-                  <img src={e.bannerImage} alt={e.title} className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                  <EventImage src={e.bannerImage} alt={e.title} className="w-10 h-10 rounded-lg object-cover shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">{e.title}</p>
                     <p className="text-xs text-indigo-200">{e.time} · {e.venue}</p>
@@ -169,7 +170,7 @@ export default function AdminDashboard() {
                   <Link key={event.id} href={`/admin/events/${event.id}`}>
                     <Card className="p-3 sm:p-4 hover:shadow-sm hover:border-indigo-200 transition-all">
                       <div className="flex items-center gap-3">
-                        <img src={event.bannerImage} alt={event.title} className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover shrink-0" />
+                        <EventImage src={event.bannerImage} alt={event.title} className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-900 truncate text-sm sm:text-base">{event.title}</p>
                           <p className="text-xs sm:text-sm text-gray-500 flex items-center gap-1 mt-0.5">

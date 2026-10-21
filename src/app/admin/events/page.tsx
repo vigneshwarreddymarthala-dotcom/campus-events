@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 import { Plus, Search, Users, Eye, Edit, Trash2, Calendar, Copy, X, Bell, CheckCircle2, UserX, Send, Star } from "lucide-react";
+import { EventImage } from "@/components/shared/EventImage";
 
 const STATUS_COLORS: Record<string, string> = {
   upcoming: "bg-blue-100 text-blue-700",
@@ -217,7 +218,7 @@ export default function AdminEventsPage() {
                   <tr key={event.id} className={`hover:bg-gray-50 transition-colors ${past ? "opacity-75" : ""}`}>
                     <td className="px-4 py-3">
                       <Link href={`/admin/events/${event.id}`} className="flex items-center gap-3 group">
-                        <img src={event.bannerImage} alt={event.title} className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                        <EventImage src={event.bannerImage} alt={event.title} className="w-10 h-10 rounded-lg object-cover shrink-0" />
                         <div className="min-w-0">
                           <p className="font-medium text-gray-900 truncate max-w-[200px] group-hover:text-indigo-600 transition-colors">{event.title}</p>
                           <p className="text-xs text-gray-400 truncate">{event.venue}</p>

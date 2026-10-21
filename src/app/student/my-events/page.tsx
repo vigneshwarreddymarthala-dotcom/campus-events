@@ -17,6 +17,7 @@ import {
   type StudentRegistrationWithEvent,
 } from "@/lib/db";
 import { useAuth } from "@/contexts/auth-context";
+import { EventImage } from "@/components/shared/EventImage";
 
 const SEMESTER_GOAL_HOURS = 20;
 
@@ -154,7 +155,7 @@ export default function MyEventsPage() {
                 return (
                   <Link key={event.id} href={`/student/events/${event.id}`}>
                     <div className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-4 hover:border-indigo-200 hover:shadow-sm transition-all group">
-                      <img src={event.bannerImage} alt={event.title} className="w-14 h-14 rounded-xl object-cover shrink-0" />
+                      <EventImage src={event.bannerImage} alt={event.title} className="w-14 h-14 rounded-xl object-cover shrink-0" />
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-gray-900 text-sm truncate group-hover:text-indigo-700 transition-colors">{event.title}</h3>
                         <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">

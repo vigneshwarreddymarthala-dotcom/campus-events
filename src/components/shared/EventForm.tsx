@@ -159,6 +159,10 @@ export default function EventForm({ initial, onSubmit, submitLabel }: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (form.bannerImage && !/^https?:\/\//i.test(form.bannerImage.trim())) {
+      setUploadError("Banner must be an image link starting with https:// (or upload an image).");
+      return;
+    }
     const submitData = { ...form };
     if (publishMode === "now") {
       submitData.publishAt = "";
@@ -355,6 +359,7 @@ export default function EventForm({ initial, onSubmit, submitLabel }: Props) {
                   className="mt-1"
                 />
               )}
+              {bannerMode === "url" && uploadError && <p className="text-xs text-red-500 mt-1">{uploadError}</p>}
 
               {/* Preview */}
               {form.bannerImage && (
