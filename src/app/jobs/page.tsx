@@ -51,7 +51,7 @@ export default function PublicJobsPage() {
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
               <GraduationCap className="w-4.5 h-4.5 text-white" />
             </div>
-            <span className="font-bold text-gray-900">CampusEvents</span>
+            <span className="font-bold text-gray-900">Spirits</span>
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/jobs" className="text-sm font-medium text-indigo-600">

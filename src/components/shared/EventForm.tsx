@@ -416,6 +416,7 @@ export default function EventForm({ initial, onSubmit, submitLabel }: Props) {
             <h2 className="font-semibold text-gray-900">Tags</h2>
             <div className="flex gap-2">
               <Input
+                aria-label="Add a tag"
                 placeholder="Add a tag (e.g. coding)"
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}

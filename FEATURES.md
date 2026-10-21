@@ -1,4 +1,4 @@
-# CampusEvents — Feature Flows
+# Spirits — Feature Flows
 
 > Use this document as the source of truth for building visual flow diagrams.
 > Each feature lists: **Start → Steps → End**, plus **connects to** other features.
@@ -10,8 +10,10 @@
 | Actor   | Entry Point           |
 |---------|-----------------------|
 | Student | `/login` → `/student/events` |
-| Admin   | `/login` → `/admin`   |
-| Guest   | `/login` or `/register` |
+| Event head (team head) | `/login` → `/team-head` — can create and manage **one** event |
+| Admin (organizer) | `/login` → `/admin` — creates and manages all events and jobs |
+| Super admin | `/login` → `/super-admin` — creates organizer and event-head accounts |
+| Guest   | `/` (landing page with login card), `/login` or `/register` |
 
 ---
 
@@ -21,7 +23,7 @@
 
 **Steps:**
 1. Fill name, email, password, confirm password
-2. Optionally fill department, year, phone
+2. Fill phone (optional), home country, study program, student status and German level (all stored on `profiles`)
 3. Accept Terms & Conditions (link to `/terms`)
 4. Submit → `supabase.auth.signUp()` + insert into `profiles`
 
@@ -256,7 +258,8 @@
 **Sections:**
 - Avatar with initials
 - Stats: Registered events, Saved, Attended
-- Editable fields: Name, Phone, Department, Year
+- Profile picture upload (camera button on the avatar, see Feature 24)
+- Editable fields: Name, Mobiltelefon (phone), Heimatland (home country), study program, student status, German level
 - Edit mode: save changes to `profiles` table in Supabase
 - Sign Out button
 
@@ -300,7 +303,7 @@
 
 **Steps:**
 1. Fill EventForm: title, description, date, end date, time, venue, category, status, capacity, fee
-2. Optional: organizer name, organizer email, banner image URL, banner link, ticket URL, tags
+2. Optional: organizer name, organizer email, banner image (upload, paste, Instagram import or `https://` URL), banner link, ticket URL, tags
 3. Submit → `createEvent()` inserts into `events` table
 
 **End:** Redirect to `/admin/events` (events list)
@@ -474,6 +477,84 @@
 
 ---
 
+## 22. Event Head (Team Head)
+
+**Start:** Event head logs in → `/team-head`
+
+**Steps:**
+1. First visit: "Create your event" form (same EventForm as admins). An event head can create **one** event
+2. After that: manage only their own event (registrants, attendance, surveys)
+
+**Rules:** enforced by database policies. An event head can insert one event with `created_by = their id` and update only that event.
+
+**Connects to:** Feature 13 (Create Event), Feature 23 (Super Admin — who creates the account)
+
+---
+
+## 23. Super Admin
+
+**Start:** Super admin logs in → `/super-admin`
+
+**Steps:**
+1. View all organizers and event heads
+2. "Create organizer" → `/api/super-admin/create-organizer` creates the account with role `admin` or `event_head`
+
+**Note:** this is the only way an account gets posting rights. Students cannot promote themselves.
+
+---
+
+## 24. Image Upload
+
+**Start:** Event form (banner) or Admin / Student profile (avatar)
+
+**Steps:**
+1. Pick or paste a JPG, PNG, WebP or GIF (max 4 MB)
+2. Browser posts to `/api/upload` with `kind` = `banner` or `avatar`
+3. Server checks the user is signed in (banners: admin, super_admin or event_head only), then stores the file with the service role
+
+**Storage:** public buckets `event-banners` (banners) and `avatars` (one file per user id, replaced on re-upload)
+
+**Fallback:** `EventImage` shows a placeholder when an event image is missing, not an `http(s)` link, or fails to load.
+
+---
+
+## 25. Jobs
+
+**Start:** Student → `/student/jobs` (Discover, My Applications); Admin → `/admin/jobs`
+
+**Steps:**
+1. Admin posts a job (`/admin/jobs/new`), views applicants (`/admin/jobs/:id/applicants`)
+2. Student opens a job, applies with a consent checkbox; duplicate applications are rejected
+3. Public `/jobs` page lists jobs
+
+**Tables:** `jobs`, `job_applications`
+
+---
+
+## 26. Landing Page
+
+**Start:** Guest opens `/`
+
+**Contents (all from real data, nothing invented):**
+- Login card (email, password, Forgot password, Create new account) in the hero
+- Next upcoming event with a live countdown, and a "Coming up" list from `events`
+- Feature highlights and a four-step "How it works": create account, register, attend (QR check-in), feedback survey
+- Sticky "Join free" bar on mobile
+
+**Logged-in users** are redirected to their role home page (student, admin, event head, super admin).
+
+---
+
+## 27. Access Control
+
+Row-level security rules (see `supabase/lockdown_rls.sql`):
+- Only `admin` and `super_admin` (plus an event head for their own event) can create, edit or delete events and jobs
+- Students can only read events and jobs, and manage their own registrations, bookmarks, surveys, job applications and profile
+- Nobody can change their own role; signed-in users cannot read other users' profiles
+- Sign-up is restricted by a database rule to `@stud.fh-sm.de` and `@gmail.com` addresses
+
+---
+
 ## CROSS-FEATURE CONNECTION MAP
 
 ```
@@ -544,3 +625,8 @@
 | Student Report            | `profiles`, `registrations`, `events`            |
 | Notifications             | `notifications` (insert), `profiles` (read)      |
 | Admin Profile             | `profiles` (update)                              |
+| Event Head                | `events` (insert one, update own)                |
+| Super Admin               | `profiles` (read/update), auth admin API         |
+| Image Upload              | storage buckets `event-banners`, `avatars`       |
+| Jobs                      | `jobs`, `job_applications`                       |
+| Landing Page              | `events` (read)                                  |

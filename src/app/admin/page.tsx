@@ -91,7 +91,7 @@ export default function AdminDashboard() {
           </h1>
           <p className="text-gray-500 text-sm mt-1">Here&apos;s what&apos;s happening across your events.</p>
         </div>
-        <Link href="/admin/events/new" className="shrink-0">
+        <Link href="/admin/events/new" className="shrink-0" aria-label="New event">
           <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2 text-sm px-3 sm:px-4">
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">New Event</span>

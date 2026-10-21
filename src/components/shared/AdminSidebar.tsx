@@ -68,7 +68,7 @@ export default function AdminSidebar() {
           <GraduationCap className="w-4 h-4 text-white" />
         </div>
         <div>
-          <p className="text-sm font-bold text-gray-900 leading-none">CampusEvents</p>
+          <p className="text-sm font-bold text-gray-900 leading-none">Spirits</p>
           <p className="text-xs text-gray-400 mt-0.5">Organizer</p>
         </div>
       </div>
@@ -128,11 +128,12 @@ export default function AdminSidebar() {
           <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
             <GraduationCap className="w-3.5 h-3.5 text-white" />
           </div>
-          <span className="font-bold text-gray-900 text-sm">CampusEvents</span>
+          <span className="font-bold text-gray-900 text-sm">Spirits</span>
         </div>
         <button
           onClick={() => setMobileOpen(true)}
-          className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-600"
+          aria-label="Open menu"
+          className="p-2.5 rounded-xl hover:bg-gray-100 transition-colors text-gray-600"
         >
           <Menu className="w-5 h-5" />
         </button>
@@ -145,7 +146,8 @@ export default function AdminSidebar() {
           <div className="relative w-64 bg-white h-full shadow-xl flex flex-col">
             <button
               onClick={() => setMobileOpen(false)}
-              className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"
+              aria-label="Close menu"
+              className="absolute top-3 right-3 p-2 rounded-lg hover:bg-gray-100 text-gray-400"
             >
               <X className="w-4 h-4" />
             </button>

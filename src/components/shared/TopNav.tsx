@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GraduationCap } from "lucide-react";
 import NotificationBell from "@/components/shared/NotificationBell";
 
@@ -29,7 +29,7 @@ export default function TopNav({ links }: { links: NavLink[] }) {
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
             <GraduationCap className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-gray-900 text-sm hidden sm:block">CampusEvents</span>
+          <span className="font-bold text-gray-900 text-sm hidden sm:block">Spirits</span>
         </Link>
 
         {/* Nav links */}
@@ -40,7 +40,7 @@ export default function TopNav({ links }: { links: NavLink[] }) {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
+                className={`px-2.5 sm:px-3 py-2.5 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
                   active
                     ? "bg-indigo-50 text-indigo-700"
                     : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
@@ -59,9 +59,16 @@ export default function TopNav({ links }: { links: NavLink[] }) {
         {/* Avatar — links to profile page */}
         <Link
           href={profilePath}
+          aria-label="My profile"
           className="flex items-center gap-2 px-1.5 py-1 rounded-lg hover:bg-gray-100 transition-colors shrink-0"
         >
           <Avatar className="h-8 w-8">
+            {user && (
+              <AvatarImage
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${user.id}`}
+                alt=""
+              />
+            )}
             <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xs font-semibold">
               {initials}
             </AvatarFallback>

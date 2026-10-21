@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { createClient as createAdminClient, createClient as createTokenClient } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/server";
 
 const MAX_BYTES = 4 * 1024 * 1024; // stays under Vercel's 4.5 MB request body limit
@@ -12,8 +12,16 @@ const EXT_BY_TYPE: Record<string, string> = {
 const BANNER_ROLES = ["admin", "super_admin", "event_head"];
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // Web sends a session cookie; the mobile apps send a Bearer access token.
+  const bearer = req.headers.get("authorization")?.match(/^Bearer (.+)$/i)?.[1];
+  const supabase = bearer
+    ? createTokenClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+        { auth: { persistSession: false }, global: { headers: { Authorization: `Bearer ${bearer}` } } }
+      )
+    : await createClient();
+  const { data: { user } } = bearer ? await supabase.auth.getUser(bearer) : await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
 
   const form = await req.formData().catch(() => null);

@@ -49,7 +49,7 @@ function LoginPageInner() {
           <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <GraduationCap className="w-10 h-10" />
           </div>
-          <h1 className="text-4xl font-bold mb-4">CampusEvents</h1>
+          <h1 className="text-4xl font-bold mb-4">Spirits</h1>
           <p className="text-indigo-200 text-lg">
             Your one-stop hub for discovering and managing campus events. No more scrolling through WhatsApp groups.
           </p>
@@ -76,7 +76,7 @@ function LoginPageInner() {
             <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
               <GraduationCap className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-indigo-700">CampusEvents</span>
+            <span className="text-xl font-bold text-indigo-700">Spirits</span>
           </div>
 
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h2>
@@ -115,7 +115,8 @@ function LoginPageInner() {
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 p-2.5 text-gray-400 hover:text-gray-600"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

@@ -95,7 +95,7 @@ export default function RegisterPage() {
             <GraduationCap className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-gray-900">CampusEvents</h1>
+            <h1 className="font-bold text-gray-900">Spirits</h1>
             <p className="text-xs text-gray-500">Create your account</p>
           </div>
         </div>
@@ -214,7 +214,8 @@ export default function RegisterPage() {
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 p-2.5 text-gray-400 hover:text-gray-600"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -260,7 +261,8 @@ export default function RegisterPage() {
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 p-2.5 text-gray-400 hover:text-gray-600"
+                  aria-label={showConfirm ? "Hide password" : "Show password"}
                   onClick={() => setShowConfirm(!showConfirm)}
                 >
                   {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -277,8 +279,11 @@ export default function RegisterPage() {
             <div className="flex items-start gap-3">
               <button
                 type="button"
+                role="checkbox"
+                aria-checked={acceptedTerms}
+                aria-label="Accept the Terms & Conditions"
                 onClick={() => setAcceptedTerms(!acceptedTerms)}
-                className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+                className={`mt-0.5 w-6 h-6 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
                   acceptedTerms ? "bg-indigo-600 border-indigo-600" : "border-gray-300 hover:border-indigo-400"
                 }`}
               >

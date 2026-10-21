@@ -83,7 +83,7 @@ export default function RegistrantsTab({ id }: { id: string }) {
     const eventTitle = event?.title ?? "";
     const certsHtml = attended.map((r, i) => `
       <div style="page-break-after:${i < attended.length - 1 ? "always" : "auto"};padding:60px;text-align:center;border:8px double #f59e0b;margin:20px;border-radius:16px;font-family:Georgia,serif;">
-        <div style="font-size:14px;color:#6b7280;letter-spacing:4px;text-transform:uppercase;margin-bottom:24px;">CampusEvents</div>
+        <div style="font-size:14px;color:#6b7280;letter-spacing:4px;text-transform:uppercase;margin-bottom:24px;">Spirits</div>
         <div style="font-size:13px;color:#374151;margin-bottom:32px;">This is to certify that</div>
         <div style="font-size:32px;font-weight:bold;color:#1f2937;border-bottom:2px solid #e5e7eb;padding-bottom:12px;margin-bottom:12px;">${r.student_name}</div>
         <div style="font-size:13px;color:#6b7280;margin-bottom:32px;">${r.student_department ?? ""}${r.student_year ? " · " + r.student_year : ""}</div>

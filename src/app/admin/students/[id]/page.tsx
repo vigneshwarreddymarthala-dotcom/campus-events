@@ -94,7 +94,7 @@ export default function StudentReportPage({ params }: { params: Promise<{ id: st
 
       {/* Print header (only visible when printing) */}
       <div className="hidden print:block text-center mb-6 border-b pb-4">
-        <h1 className="text-xl font-bold">CampusEvents — Student Report</h1>
+        <h1 className="text-xl font-bold">Spirits — Student Report</h1>
         <p className="text-sm text-gray-500">Generated {format(new Date(), "dd MMM yyyy, h:mm a")}</p>
       </div>
 
@@ -193,7 +193,7 @@ export default function StudentReportPage({ params }: { params: Promise<{ id: st
 
       {/* Print footer */}
       <div className="hidden print:block text-center text-xs text-gray-400 pt-4 border-t">
-        CampusEvents Platform · Confidential
+        Spirits Platform · Confidential
       </div>
 
       {/* Certificate modal */}
@@ -207,7 +207,7 @@ export default function StudentReportPage({ params }: { params: Promise<{ id: st
                   <Award className="w-7 h-7 text-white" />
                 </div>
               </div>
-              <p className="text-xs tracking-[0.3em] text-gray-400 uppercase font-semibold mb-2">CampusEvents</p>
+              <p className="text-xs tracking-[0.3em] text-gray-400 uppercase font-semibold mb-2">Spirits</p>
               <h1 className="text-3xl font-bold text-gray-900 mb-1">Certificate of Participation</h1>
               <p className="text-gray-500 text-sm mb-6">This is to certify that</p>
               <p className="text-4xl font-bold text-indigo-700 mb-2">{student.name}</p>
@@ -240,7 +240,7 @@ export default function StudentReportPage({ params }: { params: Promise<{ id: st
                 </div>
                 <div className="text-right">
                   <div className="w-32 h-0.5 bg-gray-400 mb-1 ml-auto" />
-                  <p className="text-xs text-gray-500">CampusEvents</p>
+                  <p className="text-xs text-gray-500">Spirits</p>
                 </div>
               </div>
             </div>
@@ -275,7 +275,7 @@ export default function StudentReportPage({ params }: { params: Promise<{ id: st
       {notifyOpen && student && (
         <NotificationModal
           recipients={[{ userId: student.id, name: student.name }]}
-          defaultTitle="Message from Campus Events"
+          defaultTitle="Message from Spirits"
           defaultMessage={`Hi ${student.name.split(" ")[0]}, `}
           onClose={() => setNotifyOpen(false)}
         />

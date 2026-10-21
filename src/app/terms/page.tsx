@@ -9,7 +9,7 @@ export default function TermsPage() {
           <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center">
             <GraduationCap className="w-5 h-5 text-white" />
           </div>
-          <span className="font-bold text-gray-900">CampusEvents</span>
+          <span className="font-bold text-gray-900">Spirits</span>
         </div>
 
         <Link href="/register" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600 mb-8">
@@ -23,11 +23,11 @@ export default function TermsPage() {
           {[
             {
               title: "1. Acceptance of Terms",
-              body: "By creating an account on CampusEvents, you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use the platform.",
+              body: "By creating an account on Spirits, you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use the platform.",
             },
             {
               title: "2. Eligibility",
-              body: "CampusEvents is available exclusively to students, faculty, and staff of the college. You must use your official college email address to register. Accounts registered with personal email addresses may be removed.",
+              body: "Spirits is available exclusively to students, faculty, and staff of the college. You must use your official college email address to register. Accounts registered with personal email addresses may be removed.",
             },
             {
               title: "3. Account Responsibilities",
@@ -47,11 +47,11 @@ export default function TermsPage() {
             },
             {
               title: "7. Intellectual Property",
-              body: "Event content posted by organizers remains their property. By posting, they grant CampusEvents a non-exclusive license to display the content on the platform. Do not upload content you do not own.",
+              body: "Event content posted by organizers remains their property. By posting, they grant Spirits a non-exclusive license to display the content on the platform. Do not upload content you do not own.",
             },
             {
               title: "8. Limitation of Liability",
-              body: "CampusEvents is provided as a convenience tool and is not liable for event cancellations, venue changes, or any losses arising from relying on platform information. Always confirm critical event details directly with the organizer.",
+              body: "Spirits is provided as a convenience tool and is not liable for event cancellations, venue changes, or any losses arising from relying on platform information. Always confirm critical event details directly with the organizer.",
             },
             {
               title: "9. Changes to Terms",

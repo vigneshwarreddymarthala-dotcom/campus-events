@@ -9,7 +9,7 @@ export default function PrivacyPolicyPage() {
           <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center">
             <GraduationCap className="w-5 h-5 text-white" />
           </div>
-          <span className="font-bold text-gray-900">CampusEvents</span>
+          <span className="font-bold text-gray-900">Spirits</span>
         </div>
 
         <Link href="/register" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600 mb-8">
@@ -27,7 +27,7 @@ export default function PrivacyPolicyPage() {
             },
             {
               title: "2. How We Use Your Information",
-              body: "Your data is used to: provide and improve the CampusEvents platform, send event reminders and notifications you opt into, allow organizers to see registrant lists for events you sign up for, generate anonymized analytics to improve event discovery, and prevent fraud and enforce our terms.",
+              body: "Your data is used to: provide and improve the Spirits platform, send event reminders and notifications you opt into, allow organizers to see registrant lists for events you sign up for, generate anonymized analytics to improve event discovery, and prevent fraud and enforce our terms.",
             },
             {
               title: "3. Data Sharing",
@@ -55,7 +55,7 @@ export default function PrivacyPolicyPage() {
             },
             {
               title: "9. Children's Privacy",
-              body: "CampusEvents is intended for college students (18+). We do not knowingly collect data from individuals under 18. If you believe a minor has registered, contact us immediately.",
+              body: "Spirits is intended for college students (18+). We do not knowingly collect data from individuals under 18. If you believe a minor has registered, contact us immediately.",
             },
             {
               title: "10. Contact Us",

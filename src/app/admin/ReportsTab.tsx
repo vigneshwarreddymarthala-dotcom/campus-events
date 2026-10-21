@@ -80,7 +80,7 @@ export default function ReportsTab() {
 
       {/* Print header */}
       <div className="hidden print:block text-center border-b pb-6 mb-6">
-        <h1 className="text-3xl font-bold">CampusEvents — Semester Report</h1>
+        <h1 className="text-3xl font-bold">Spirits — Semester Report</h1>
         <p className="text-gray-500 mt-1">Generated on {format(new Date(), "MMMM d, yyyy")}</p>
       </div>
 
@@ -166,7 +166,7 @@ export default function ReportsTab() {
 
       {/* Print footer */}
       <div className="hidden print:block text-center text-xs text-gray-400 pt-4 border-t mt-8">
-        CampusEvents · Confidential · {format(new Date(), "yyyy")}
+        Spirits · Confidential · {format(new Date(), "yyyy")}
       </div>
     </div>
   );

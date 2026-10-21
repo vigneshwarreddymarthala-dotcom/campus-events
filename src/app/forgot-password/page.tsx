@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
           <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
             <GraduationCap className="w-6 h-6 text-white" />
           </div>
-          <span className="font-bold text-gray-900">CampusEvents</span>
+          <span className="font-bold text-gray-900">Spirits</span>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">

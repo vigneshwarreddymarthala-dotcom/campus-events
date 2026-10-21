@@ -9,7 +9,7 @@ export default function DeleteAccountPage() {
           <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center">
             <GraduationCap className="w-5 h-5 text-white" />
           </div>
-          <span className="font-bold text-gray-900">CampusEvents</span>
+          <span className="font-bold text-gray-900">Spirits</span>
         </div>
 
         <Link href="/login" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600 mb-8">
@@ -24,8 +24,8 @@ export default function DeleteAccountPage() {
             <section>
               <h2 className="text-lg font-semibold text-gray-900 mb-2">How to request deletion</h2>
               <p className="text-gray-600 leading-relaxed">
-                To delete your CampusEvents account and associated data, send an email to{" "}
-                <a href="mailto:vigneshwarreddy.marthala@gmail.com?subject=CampusEvents%20Account%20Deletion%20Request" className="text-indigo-600 font-medium hover:underline">
+                To delete your Spirits account and associated data, send an email to{" "}
+                <a href="mailto:vigneshwarreddy.marthala@gmail.com?subject=Spirits%20Account%20Deletion%20Request" className="text-indigo-600 font-medium hover:underline">
                   vigneshwarreddy.marthala@gmail.com
                 </a>{" "}
                 from the email address associated with your account, with the subject line{" "}

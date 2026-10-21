@@ -32,7 +32,7 @@ export default function TeamHeadLayout({ children }: LayoutProps<"/team-head">) 
               <ShieldCheck className="w-4 h-4 text-white" />
             </div>
             <div>
-              <p className="text-sm font-bold text-gray-900 leading-none">CampusEvents</p>
+              <p className="text-sm font-bold text-gray-900 leading-none">Spirits</p>
               <p className="text-xs text-gray-400 mt-0.5">Team Head</p>
             </div>
           </div>

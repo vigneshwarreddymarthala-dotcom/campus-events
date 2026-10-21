@@ -64,7 +64,8 @@ export default function EventCard({
               {basePath === "student" && onBookmark && (
                 <button
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); onBookmark(event.id); }}
-                  className="shrink-0 p-1 text-gray-300 hover:text-indigo-500 transition-colors"
+                  aria-label={isBookmarked ? "Remove from saved" : "Save event"}
+                  className="shrink-0 p-2 -m-1 text-gray-300 hover:text-indigo-500 transition-colors"
                 >
                   {isBookmarked ? <BookmarkCheck className="w-4 h-4 text-indigo-500" /> : <Bookmark className="w-4 h-4" />}
                 </button>
