@@ -53,15 +53,15 @@ function LoginPageInner() {
           <p className="text-indigo-200 text-lg">
             Your one-stop hub for discovering and managing campus events. No more scrolling through WhatsApp groups.
           </p>
-          <div className="mt-10 grid grid-cols-3 gap-6 text-center">
+          <div className="mt-10 grid grid-cols-3 gap-4 text-center">
             {[
-              { number: "50+", label: "Events/Month" },
-              { number: "1500+", label: "Students" },
-              { number: "100%", label: "Free to Use" },
-            ].map((stat) => (
-              <div key={stat.label} className="bg-white/10 rounded-xl p-4">
-                <div className="text-2xl font-bold">{stat.number}</div>
-                <div className="text-indigo-200 text-sm mt-1">{stat.label}</div>
+              { step: "1", label: "Register" },
+              { step: "2", label: "Check in" },
+              { step: "3", label: "Give feedback" },
+            ].map((item) => (
+              <div key={item.label} className="bg-white/10 rounded-xl p-4">
+                <div className="text-2xl font-bold">{item.step}</div>
+                <div className="text-indigo-200 text-sm mt-1">{item.label}</div>
               </div>
             ))}
           </div>
