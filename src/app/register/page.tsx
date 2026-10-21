@@ -9,8 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, GraduationCap, AlertCircle, CheckCircle2 } from "lucide-react";
 
-const DEPARTMENTS = ["Computer Science", "Information Technology", "ECE", "EEE", "Mechanical", "Civil", "MBA", "Other"];
-const YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "Faculty"];
+import { STUDY_PROGRAMS, STUDENT_STATUSES, GERMAN_LEVELS } from "@/lib/profile-options";
 const ALLOWED_EMAIL_DOMAINS = ["stud.fh-sm.de", "gmail.com"];
 
 function isAllowedEmail(email: string) {
@@ -27,9 +26,11 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    department: "",
-    year: "",
     phone: "",
+    homeCountry: "",
+    studyProgram: "",
+    studentStatus: "",
+    germanLevel: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -71,9 +72,11 @@ export default function RegisterPage() {
       email: form.email,
       password: form.password,
       role: "student",
-      department: form.department,
-      year: form.year,
       phone: form.phone,
+      homeCountry: form.homeCountry,
+      studyProgram: form.studyProgram,
+      studentStatus: form.studentStatus,
+      germanLevel: form.germanLevel,
     });
     setLoading(false);
     if (!result.success) {
@@ -132,45 +135,68 @@ export default function RegisterPage() {
               </p>
             </div>
 
-            {/* Department + Year */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="dept">Department</Label>
-                <select
-                  id="dept"
-                  value={form.department}
-                  onChange={(e) => set("department", e.target.value)}
-                  className="mt-1 w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                >
-                  <option value="">Select dept</option>
-                  {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="year">Year</Label>
-                <select
-                  id="year"
-                  value={form.year}
-                  onChange={(e) => set("year", e.target.value)}
-                  className="mt-1 w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                >
-                  <option value="">Select year</option>
-                  {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
-                </select>
-              </div>
-            </div>
-
-            {/* Phone */}
+            {/* Mobile phone */}
             <div>
-              <Label htmlFor="phone">Phone Number <span className="text-gray-400 font-normal">(optional)</span></Label>
+              <Label htmlFor="phone">Mobiltelefon - Mobile phone <span className="text-gray-400 font-normal">(optional)</span></Label>
               <Input
                 id="phone"
                 type="tel"
-                placeholder="9876543210"
+                placeholder="+49 170 1234567"
                 value={form.phone}
                 onChange={(e) => set("phone", e.target.value)}
                 className="mt-1"
               />
+            </div>
+
+            {/* Home country */}
+            <div>
+              <Label htmlFor="homeCountry">Heimatland - Home Country</Label>
+              <Input
+                id="homeCountry"
+                placeholder="India"
+                value={form.homeCountry}
+                onChange={(e) => set("homeCountry", e.target.value)}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="studyProgram">Was studierst du? - What do you study / name of current study program?</Label>
+              <select
+                id="studyProgram"
+                value={form.studyProgram}
+                onChange={(e) => set("studyProgram", e.target.value)}
+                className="mt-1 w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value="">Select</option>
+                {STUDY_PROGRAMS.map((o) => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <Label htmlFor="studentStatus">Welchen Studentenstatus hast du? - What is your student status?</Label>
+              <select
+                id="studentStatus"
+                value={form.studentStatus}
+                onChange={(e) => set("studentStatus", e.target.value)}
+                className="mt-1 w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value="">Select</option>
+                {STUDENT_STATUSES.map((o) => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <Label htmlFor="germanLevel">Wie gut sind Ihre Deutschkenntnisse? - What is your level of proficiency in the German language?</Label>
+              <select
+                id="germanLevel"
+                value={form.germanLevel}
+                onChange={(e) => set("germanLevel", e.target.value)}
+                className="mt-1 w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value="">Select</option>
+                {GERMAN_LEVELS.map((o) => <option key={o} value={o}>{o}</option>)}
+              </select>
             </div>
 
             {/* Password */}

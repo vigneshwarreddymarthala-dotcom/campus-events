@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { X, Plus, Upload, Link as LinkIcon, Loader2, ImageDown } from "lucide-react";
-import { createClient } from "@/utils/supabase/client";
 
 type BannerMode = "upload" | "url" | "instagram";
 
@@ -67,12 +66,13 @@ export default function EventForm({ initial, onSubmit, submitLabel }: Props) {
     setUploading(true);
     setUploadError("");
     try {
-      const supabase = createClient();
-      const ext = file.type.split("/")[1]?.split("+")[0] ?? "jpg";
-      const path = `banners/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error } = await supabase.storage.from("event-banners").upload(path, file, { upsert: false });
-      if (error) throw error;
-      const { data: { publicUrl } } = supabase.storage.from("event-banners").getPublicUrl(path);
+      const body = new FormData();
+      body.append("file", file);
+      body.append("kind", "banner");
+      const res = await fetch("/api/upload", { method: "POST", body });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? "Upload failed");
+      const publicUrl: string = json.url;
       set("bannerImage", publicUrl);
       return true;
     } catch (err: unknown) {

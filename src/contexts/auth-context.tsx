@@ -15,6 +15,10 @@ export type User = {
   department?: string;
   year?: string;
   phone?: string;
+  homeCountry?: string;
+  studyProgram?: string;
+  studentStatus?: string;
+  germanLevel?: string;
 };
 
 type AuthContextType = {
@@ -22,6 +26,7 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   isLoading: boolean;
 };
 
@@ -33,6 +38,10 @@ type RegisterData = {
   department?: string;
   year?: string;
   phone?: string;
+  homeCountry?: string;
+  studyProgram?: string;
+  studentStatus?: string;
+  germanLevel?: string;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -57,6 +66,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: data.role as UserRole,
       department: data.department ?? undefined,
       year: data.year ?? undefined,
+      phone: data.phone ?? undefined,
+      homeCountry: data.home_country ?? undefined,
+      studyProgram: data.study_program ?? undefined,
+      studentStatus: data.student_status ?? undefined,
+      germanLevel: data.german_level ?? undefined,
     };
   }
 
@@ -96,13 +110,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: {
           name: data.name,
           role: "student",
-          department: data.department ?? null,
-          year: data.year ?? null,
+          department: data.studyProgram ?? data.department ?? null,
+          year: data.studentStatus ?? data.year ?? null,
+          phone: data.phone ?? null,
+          home_country: data.homeCountry ?? null,
+          study_program: data.studyProgram ?? null,
+          student_status: data.studentStatus ?? null,
+          german_level: data.germanLevel ?? null,
         },
       },
     });
     if (error) return { success: false, error: error.message };
     return { success: true };
+  };
+
+  const refreshUser = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) setUser(await loadProfile(session.user.id));
   };
 
   const logout = async () => {
@@ -112,7 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, refreshUser, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

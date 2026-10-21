@@ -5,39 +5,36 @@ import { useAuth } from "@/contexts/auth-context";
 import { createClient } from "@/utils/supabase/client";
 import { getMyRegistrations, getMyBookmarks } from "@/lib/db";
 import {
-  User, Mail, Phone, BookOpen, GraduationCap,
+  User, Mail, Phone, BookOpen, GraduationCap, Globe, Languages,
   Edit2, Save, X, LogOut, Calendar, Bookmark, CheckCircle,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-
-const DEPARTMENTS = [
-  "Computer Science", "Electrical Engineering", "Mechanical Engineering",
-  "Civil Engineering", "Business Administration", "Arts & Humanities",
-  "Medical Sciences", "Law", "Architecture", "Other",
-];
-
-const YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "Alumni"];
+import { AvatarUpload } from "@/components/shared/AvatarUpload";
+import { STUDY_PROGRAMS, STUDENT_STATUSES, GERMAN_LEVELS } from "@/lib/profile-options";
 
 export default function StudentProfilePage() {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const [form, setForm] = useState({
+  const formFromUser = () => ({
     name: user?.name ?? "",
     phone: user?.phone ?? "",
-    department: user?.department ?? "",
-    year: user?.year ?? "",
+    homeCountry: user?.homeCountry ?? "",
+    studyProgram: user?.studyProgram ?? "",
+    studentStatus: user?.studentStatus ?? "",
+    germanLevel: user?.germanLevel ?? "",
   });
+
+  const [form, setForm] = useState(formFromUser);
 
   const [stats, setStats] = useState({ registered: 0, bookmarks: 0, attended: 0 });
 
   useEffect(() => {
-    if (user) {
-      setForm({ name: user.name, phone: user.phone ?? "", department: user.department ?? "", year: user.year ?? "" });
-    }
+    if (user) setForm(formFromUser());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {
@@ -63,19 +60,24 @@ export default function StudentProfilePage() {
       .update({
         name: form.name.trim(),
         phone: form.phone.trim() || null,
-        department: form.department || null,
-        year: form.year || null,
+        home_country: form.homeCountry.trim() || null,
+        study_program: form.studyProgram || null,
+        student_status: form.studentStatus || null,
+        german_level: form.germanLevel || null,
+        department: form.studyProgram || null,
+        year: form.studentStatus || null,
       })
       .eq("id", user!.id);
     setSaving(false);
     if (dbErr) { setError(dbErr.message); return; }
+    await refreshUser();
     setSuccess("Profile updated!");
     setEditing(false);
     setTimeout(() => setSuccess(""), 3000);
   };
 
   const cancelEdit = () => {
-    setForm({ name: user?.name ?? "", phone: user?.phone ?? "", department: user?.department ?? "", year: user?.year ?? "" });
+    setForm(formFromUser());
     setEditing(false);
     setError("");
   };
@@ -97,9 +99,7 @@ export default function StudentProfilePage() {
       {/* Avatar + name card */}
       <div className="bg-white rounded-2xl border border-gray-200 p-6">
         <div className="flex items-start gap-4">
-          <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center shrink-0">
-            <span className="text-2xl font-bold text-indigo-700">{initials}</span>
-          </div>
+          {user && <AvatarUpload userId={user.id} initials={initials} onError={setError} />}
           <div className="flex-1 min-w-0">
             <h2 className="text-lg font-semibold text-gray-900 truncate">{user?.name}</h2>
             <p className="text-sm text-gray-500">{user?.email}</p>
@@ -165,43 +165,69 @@ export default function StudentProfilePage() {
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">Phone Number</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">Mobiltelefon - Mobile phone</label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   value={form.phone}
                   onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
                   className="pl-9"
-                  placeholder="+91 XXXXX XXXXX"
+                  placeholder="+49 170 1234567"
                   type="tel"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">Department</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">Heimatland - Home Country</label>
+              <div className="relative">
+                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  value={form.homeCountry}
+                  onChange={(e) => setForm((f) => ({ ...f, homeCountry: e.target.value }))}
+                  className="pl-9"
+                  placeholder="India"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">Was studierst du? - What do you study / name of current study program?</label>
               <div className="relative">
                 <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <select
-                  value={form.department}
-                  onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
+                  value={form.studyProgram}
+                  onChange={(e) => setForm((f) => ({ ...f, studyProgram: e.target.value }))}
                   className="w-full h-9 rounded-md border border-input bg-background pl-9 pr-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
                 >
-                  <option value="">Select department</option>
-                  {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                  <option value="">Select study program</option>
+                  {STUDY_PROGRAMS.map((o) => <option key={o} value={o}>{o}</option>)}
                 </select>
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">Year of Study</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">Welchen Studentenstatus hast du? - What is your student status?</label>
               <div className="relative">
                 <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <select
-                  value={form.year}
-                  onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))}
+                  value={form.studentStatus}
+                  onChange={(e) => setForm((f) => ({ ...f, studentStatus: e.target.value }))}
                   className="w-full h-9 rounded-md border border-input bg-background pl-9 pr-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
                 >
-                  <option value="">Select year</option>
-                  {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+                  <option value="">Select student status</option>
+                  {STUDENT_STATUSES.map((o) => <option key={o} value={o}>{o}</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">Wie gut sind Ihre Deutschkenntnisse? - What is your level of proficiency in the German language?</label>
+              <div className="relative">
+                <Languages className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <select
+                  value={form.germanLevel}
+                  onChange={(e) => setForm((f) => ({ ...f, germanLevel: e.target.value }))}
+                  className="w-full h-9 rounded-md border border-input bg-background pl-9 pr-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <option value="">Select level</option>
+                  {GERMAN_LEVELS.map((o) => <option key={o} value={o}>{o}</option>)}
                 </select>
               </div>
             </div>
@@ -226,9 +252,11 @@ export default function StudentProfilePage() {
         ) : (
           <div className="space-y-4">
             <InfoRow icon={<Mail className="w-4 h-4" />} label="Email" value={user?.email ?? "—"} />
-            <InfoRow icon={<Phone className="w-4 h-4" />} label="Phone" value={user?.phone || "Not set"} muted={!user?.phone} />
-            <InfoRow icon={<BookOpen className="w-4 h-4" />} label="Department" value={user?.department || "Not set"} muted={!user?.department} />
-            <InfoRow icon={<GraduationCap className="w-4 h-4" />} label="Year" value={user?.year || "Not set"} muted={!user?.year} />
+            <InfoRow icon={<Phone className="w-4 h-4" />} label="Mobiltelefon - Mobile phone" value={user?.phone || "Not set"} muted={!user?.phone} />
+            <InfoRow icon={<Globe className="w-4 h-4" />} label="Heimatland - Home Country" value={user?.homeCountry || "Not set"} muted={!user?.homeCountry} />
+            <InfoRow icon={<BookOpen className="w-4 h-4" />} label="Study program" value={user?.studyProgram || "Not set"} muted={!user?.studyProgram} />
+            <InfoRow icon={<GraduationCap className="w-4 h-4" />} label="Student status" value={user?.studentStatus || "Not set"} muted={!user?.studentStatus} />
+            <InfoRow icon={<Languages className="w-4 h-4" />} label="German level" value={user?.germanLevel || "Not set"} muted={!user?.germanLevel} />
           </div>
         )}
       </div>

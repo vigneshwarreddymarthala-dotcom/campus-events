@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { createClient } from "@/utils/supabase/client";
 import { User, Mail, Edit2, Save, X, LogOut, Shield, Key } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { AvatarUpload } from "@/components/shared/AvatarUpload";
 
 export default function AdminProfilePage() {
   const { user, logout } = useAuth();
@@ -60,9 +61,7 @@ export default function AdminProfilePage() {
       {/* Avatar card */}
       <div className="bg-white rounded-2xl border border-gray-200 p-6">
         <div className="flex items-start gap-4">
-          <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center shrink-0">
-            <span className="text-2xl font-bold text-indigo-700">{initials}</span>
-          </div>
+          {user && <AvatarUpload userId={user.id} initials={initials} onError={setError} />}
           <div className="flex-1 min-w-0">
             <h2 className="text-lg font-semibold text-gray-900 truncate">{user?.name}</h2>
             <p className="text-sm text-gray-500">{user?.email}</p>
