@@ -6,7 +6,7 @@ import { getStudentProfile, getStudentRegistrationsWithEvents, type DbProfile, t
 import { format, parseISO } from "date-fns";
 import {
   ArrowLeft, Mail, Phone, BookOpen, GraduationCap,
-  Calendar, CheckCircle, Clock, Printer, User, Bell, Award,
+  Calendar, CheckCircle, Clock, Printer, User, Bell, Award, KeyRound, Copy,
 } from "lucide-react";
 import NotificationModal from "@/components/shared/NotificationModal";
 function calcHours(time: string, endTime: string | null): number {
@@ -24,6 +24,30 @@ export default function StudentReportPage({ params }: { params: Promise<{ id: st
   const [loading, setLoading] = useState(true);
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [showCert, setShowCert] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const [resetError, setResetError] = useState("");
+
+  const resetPassword = async () => {
+    if (!student) return;
+    if (!window.confirm(`Set a new temporary password for ${student.name}? Their old password will stop working.`)) return;
+    setResetting(true);
+    setResetError("");
+    try {
+      const res = await fetch("/api/admin/reset-student-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: student.id }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? "Could not reset the password.");
+      setTempPassword(json.password);
+    } catch (e) {
+      setResetError(e instanceof Error ? e.message : "Could not reset the password.");
+    } finally {
+      setResetting(false);
+    }
+  };
 
   useEffect(() => {
     params.then(({ id }) => {
@@ -113,6 +137,31 @@ export default function StudentReportPage({ params }: { params: Promise<{ id: st
               {student.department && <InfoPill icon={<BookOpen className="w-3.5 h-3.5" />} label={student.department} />}
               {student.year && <InfoPill icon={<GraduationCap className="w-3.5 h-3.5" />} label={student.year} />}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Forgot password help (works without email) */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 print:hidden">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center shrink-0"><KeyRound className="w-5 h-5" /></div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-gray-900 text-sm">Student forgot their password?</p>
+            <p className="text-sm text-gray-500 mt-0.5">Set a temporary password and send it to them. They can change it in their profile.</p>
+            {tempPassword ? (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <code className="px-3 py-2 rounded-lg bg-gray-100 text-gray-900 font-mono text-sm select-all">{tempPassword}</code>
+                <button type="button" onClick={() => navigator.clipboard.writeText(tempPassword)} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 text-sm font-semibold hover:bg-indigo-100">
+                  <Copy className="w-4 h-4" /> Copy
+                </button>
+                <span className="text-xs text-gray-400 w-full">Shown only once. The old password no longer works.</span>
+              </div>
+            ) : (
+              <button type="button" onClick={resetPassword} disabled={resetting} className="mt-3 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-60">
+                {resetting ? "Resetting…" : "Set temporary password"}
+              </button>
+            )}
+            {resetError && <p className="mt-2 text-sm text-red-600">{resetError}</p>}
           </div>
         </div>
       </div>
