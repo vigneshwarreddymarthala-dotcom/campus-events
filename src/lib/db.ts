@@ -514,6 +514,16 @@ export async function markAllNotificationsRead(): Promise<void> {
   await supabase.from("notifications").update({ read: true }).eq("user_id", user.id).eq("read", false);
 }
 
+// Also deliver the message as a phone push notification (best effort: the in-app
+// notification is already saved, so a push failure never blocks the organizer).
+function pushToPhones(userIds: string[], title: string, message: string, eventId?: string) {
+  fetch("/api/push/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userIds, title, message, eventId: eventId ?? null }),
+  }).catch(() => {});
+}
+
 export async function sendNotification(userId: string, title: string, message: string, eventId?: string): Promise<void> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -526,6 +536,7 @@ export async function sendNotification(userId: string, title: string, message: s
     sent_by: user.id,
   });
   if (error) throw error;
+  pushToPhones([userId], title, message, eventId);
 }
 
 export async function sendNotificationToUsers(
@@ -541,6 +552,7 @@ export async function sendNotificationToUsers(
     userIds.map((uid) => ({ user_id: uid, title, message, event_id: eventId ?? null, sent_by: user.id }))
   );
   if (error) throw error;
+  pushToPhones(userIds, title, message, eventId);
 }
 
 // ── Admin: Students ───────────────────────────────────────────

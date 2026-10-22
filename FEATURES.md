@@ -555,6 +555,23 @@ Row-level security rules (see `supabase/lockdown_rls.sql`):
 
 ---
 
+## 28. Event Announcements and Notifications
+
+**Organizer:** event page → **Announce** tab. Write a title and message, choose *Registered students* or *All students*, send. Each student gets an in-app notification linked to the event, and a phone push notification if they use the mobile app with notifications enabled.
+
+**Student (web):** the bell in the top bar shows an unread count; opening a message goes to the event.
+**Student (mobile):** a bell with an unread badge sits at the top of Events, My Events and Profile. It opens the inbox. Tapping a push notification opens the event.
+
+**How push works:** the app saves each phone's Expo push token (`push_tokens`, via `register_push_token`). After an organizer sends, `/api/push/send` (organizers only) looks up the tokens and sends through Expo's push service. Android needs the Firebase (FCM) credentials; iOS needs the Push Notifications capability on the provisioning profile.
+
+---
+
+## 29. Add to Calendar
+
+After registering for an upcoming event, students can add it to their calendar: Google Calendar link or an `.ics` download on the web; the phone's own "New Event" sheet on mobile. The event is added with title, venue and start time (default length 2 hours) and, in the `.ics`, a 1-hour reminder.
+
+---
+
 ## CROSS-FEATURE CONNECTION MAP
 
 ```
@@ -630,3 +647,4 @@ Row-level security rules (see `supabase/lockdown_rls.sql`):
 | Image Upload              | storage buckets `event-banners`, `avatars`       |
 | Jobs                      | `jobs`, `job_applications`                       |
 | Landing Page              | `events` (read)                                  |
+| Announcements / Push      | `notifications`, `push_tokens`                   |

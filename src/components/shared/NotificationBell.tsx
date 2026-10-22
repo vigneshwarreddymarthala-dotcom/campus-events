@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Bell, X, CheckCheck } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import {
@@ -14,6 +15,7 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [notifs, setNotifs] = useState<DbNotification[]>([]);
   const panelRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const load = () => getMyNotifications().then(setNotifs).catch(() => {});
 
@@ -38,6 +40,10 @@ export default function NotificationBell() {
   const handleOpen = () => setOpen((o) => !o);
 
   const handleRead = async (n: DbNotification) => {
+    if (n.event_id) {
+      setOpen(false);
+      router.push(`/student/events/${n.event_id}`);
+    }
     if (!n.read) {
       setNotifs((prev) => prev.map((x) => x.id === n.id ? { ...x, read: true } : x));
       await markNotificationRead(n.id);
@@ -111,7 +117,7 @@ export default function NotificationBell() {
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
                       <p className="text-[10px] text-gray-400 mt-1">
-                        {format(parseISO(n.created_at), "dd MMM, h:mm a")}
+                        {format(parseISO(n.created_at), "dd MMM, h:mm a")}{n.event_id ? " · View event" : ""}
                       </p>
                     </div>
                   </div>

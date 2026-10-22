@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { isEventPast } from "@/lib/mock-data";
+import { googleCalendarUrl, downloadIcs } from "@/lib/calendar";
+import { CalendarPlus } from "lucide-react";
 import {
   ArrowLeft, Calendar, MapPin, Users, Clock, Mail,
   Bookmark, BookmarkCheck, Share2, ExternalLink, CheckCircle2,
@@ -327,6 +329,32 @@ function StudentEventDetailPageInner({ params }: { params: PageProps<"/student/e
               <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
                 <p className="text-sm font-medium text-green-800">You&apos;re registered!</p>
+              </div>
+            )}
+
+            {/* Add to calendar — for registered students, while the event is still ahead */}
+            {isRegistered && !isPast && (
+              <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-3 space-y-2">
+                <p className="text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
+                  <CalendarPlus className="w-4 h-4" /> Add to your calendar
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <a
+                    href={googleCalendarUrl(event, typeof window !== "undefined" ? window.location.href : undefined)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-center text-xs font-semibold bg-white border border-indigo-200 text-indigo-700 rounded-lg py-2.5 hover:bg-indigo-100 transition-colors"
+                  >
+                    Google Calendar
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => downloadIcs(event, typeof window !== "undefined" ? window.location.href : undefined)}
+                    className="text-xs font-semibold bg-white border border-indigo-200 text-indigo-700 rounded-lg py-2.5 hover:bg-indigo-100 transition-colors"
+                  >
+                    Apple / Outlook (.ics)
+                  </button>
+                </div>
               </div>
             )}
 

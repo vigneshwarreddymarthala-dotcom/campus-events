@@ -6,11 +6,12 @@ import Link from "next/link";
 import { type Event } from "@/lib/mock-data";
 import { getAdaptedEvent, updateEvent } from "@/lib/db";
 import EventForm from "@/components/shared/EventForm";
-import { ArrowLeft, Users, Star, QrCode, Activity, Edit3, X } from "lucide-react";
+import { ArrowLeft, Users, Star, QrCode, Activity, Edit3, X, Megaphone } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import QRCode from "react-qr-code";
 import RegistrantsTab from "@/app/admin/events/[id]/RegistrantsTab";
 import SurveysTab from "@/app/admin/events/[id]/SurveysTab";
+import AnnounceTab from "@/app/admin/events/[id]/AnnounceTab";
 
 export default function EventManagementPanel({
   id, backHref, afterSave,
@@ -109,6 +110,9 @@ export default function EventManagementPanel({
             <TabsTrigger value="attendees" className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <Users className="w-4 h-4 mr-2" /> Attendees
             </TabsTrigger>
+            <TabsTrigger value="announce" className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <Megaphone className="w-4 h-4 mr-2" /> Announce
+            </TabsTrigger>
             <TabsTrigger value="surveys" className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <Star className="w-4 h-4 mr-2" /> Surveys
             </TabsTrigger>
@@ -150,6 +154,12 @@ export default function EventManagementPanel({
         <TabsContent value="attendees">
            <div className="bg-white p-6 rounded-2xl border border-gray-200">
              <RegistrantsTab id={id} />
+           </div>
+        </TabsContent>
+
+        <TabsContent value="announce">
+           <div className="bg-white p-6 rounded-2xl border border-gray-200">
+             <AnnounceTab id={id} eventTitle={event.title} />
            </div>
         </TabsContent>
 
