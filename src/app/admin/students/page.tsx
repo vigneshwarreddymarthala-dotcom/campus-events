@@ -125,6 +125,9 @@ export default function AdminStudentsPage() {
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-gray-900 truncate">{s.name}</p>
                     <p className="text-xs text-gray-400 truncate">{s.email}</p>
+                    <p className="sm:hidden text-xs text-gray-500 mt-0.5">
+                      {s.totalRegistered} registered · <span className="text-green-600">{s.totalAttended} attended</span> · <span className="text-red-500">{s.totalRegistered - s.totalAttended} absent</span>
+                    </p>
                   </div>
                 </div>
 
@@ -146,13 +149,6 @@ export default function AdminStudentsPage() {
                 <div className="hidden sm:flex flex-col items-center">
                   <span className="text-sm font-semibold text-red-500">{s.totalRegistered - s.totalAttended}</span>
                   <span className="text-xs text-gray-400">absences</span>
-                </div>
-
-                {/* Mobile stats */}
-                <div className="sm:hidden flex items-center gap-3 shrink-0 text-xs text-gray-500">
-                  <span>{s.totalRegistered} reg</span>
-                  <span className="text-green-600">{s.totalAttended} att</span>
-                  <span className="text-red-500">{s.totalRegistered - s.totalAttended} abs</span>
                 </div>
 
                 <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />

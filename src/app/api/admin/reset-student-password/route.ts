@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
-import { createClient as createServerClient } from "@/utils/supabase/server";
+import { getRouteUser } from "@/lib/route-auth";
 
 function generatePassword() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
@@ -11,8 +11,7 @@ function generatePassword() {
 // Organizer-assisted reset: sets a temporary password for a student and returns it once.
 // Works without any email service. Staff only; only student accounts can be reset here.
 export async function POST(request: NextRequest) {
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { supabase, user } = await getRouteUser(request);
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const { data: caller } = await supabase.from("profiles").select("role").eq("id", user.id).single();

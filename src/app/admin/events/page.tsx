@@ -190,7 +190,34 @@ export default function AdminEventsPage() {
       </div>
 
       {/* Events table */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      {/* Phone: card list */}
+      <div className="sm:hidden space-y-3">
+        {filtered.length === 0 && (
+          <p className="text-center text-gray-400 py-10 text-sm">{events.length === 0 ? "Loading..." : "No events found matching your filters."}</p>
+        )}
+        {filtered.map((event) => (
+          <div key={event.id} className="bg-white rounded-2xl border border-gray-200 p-3">
+            <Link href={`/admin/events/${event.id}`} className="flex items-center gap-3">
+              <EventImage src={event.bannerImage} alt={event.title} className="w-14 h-14 rounded-xl object-cover shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-gray-900 truncate">{event.title}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{format(new Date(event.date), "MMM d, yyyy")} · {event.venue}</p>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full capitalize ${STATUS_COLORS[getEventStatus(event)] ?? STATUS_COLORS.completed}`}>{getEventStatus(event)}</span>
+                  <span className="text-xs text-gray-500 flex items-center gap-1"><Users className="w-3 h-3" />{event.registrations}/{event.capacity}</span>
+                </div>
+              </div>
+            </Link>
+            <div className="flex gap-2 mt-3">
+              <Link href={`/admin/events/${event.id}`} className="flex-1 text-center py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold">Open</Link>
+              <button onClick={() => handleClone(event.id)} className="px-4 py-2.5 rounded-xl bg-purple-50 text-purple-600" aria-label="Clone"><Copy className="w-4 h-4" /></button>
+              <button onClick={() => handleDelete(event.id, event.title)} className="px-4 py-2.5 rounded-xl bg-red-50 text-red-600" aria-label="Delete"><Trash2 className="w-4 h-4" /></button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="hidden sm:block bg-white rounded-2xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[760px]">
             <thead className="bg-gray-50 border-b border-gray-200">

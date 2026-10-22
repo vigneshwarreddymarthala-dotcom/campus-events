@@ -683,3 +683,8 @@ Staff roles (admin, super admin, event head) all open the organizer home in the 
 **For organizers:** the Registrants screen (website and app) has three lists: **Registered**, **Waiting list** (in order, with **Move to registered**) and **Cancelled** (with reasons). The top cards show Registered, Attended, No-show, Waiting list and Cancelled. Notify can target the waiting list. The CSV export includes status and cancel reason.
 
 Only registered students can check in (QR) and fill the survey (when marked present, after the event ends).
+
+## Organizer parity (desktop = mobile web = app)
+- Desktop sidebar now also links Attendance and My profile.
+- Mobile web: Events and Students lists are phone-friendly cards.
+- App: full organizer toolset (events, check-in, registrants, announce, students, jobs, reports, attendance, organizers, profile).

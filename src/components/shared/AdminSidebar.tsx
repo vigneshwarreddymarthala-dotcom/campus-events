@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import {
   LayoutDashboard, CalendarDays, Users,
-  Megaphone, GraduationCap, LogOut, Menu, X, ChevronRight, BarChart2,
+  Megaphone, GraduationCap, LogOut, Menu, X, ChevronRight, BarChart2, ClipboardCheck, UserCircle,
 } from "lucide-react";
 
 const NAV = [
@@ -21,6 +21,7 @@ const NAV = [
     items: [
       { href: "/admin/events", label: "Events", icon: CalendarDays },
       { href: "/admin/students", label: "Students", icon: Users },
+      { href: "/admin/attendance", label: "Attendance", icon: ClipboardCheck },
       { href: "/admin/jobs", label: "Jobs", icon: GraduationCap },
     ],
   },
@@ -28,6 +29,12 @@ const NAV = [
     section: "Communicate",
     items: [
       { href: "/admin/notifications", label: "Announcements", icon: Megaphone },
+    ],
+  },
+  {
+    section: "Account",
+    items: [
+      { href: "/admin/profile", label: "My profile", icon: UserCircle },
     ],
   },
 ];
