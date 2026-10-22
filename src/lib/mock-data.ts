@@ -26,7 +26,8 @@ export type Event = {
   status: "upcoming" | "ongoing" | "cancelled" | "postponed" | "completed" | "scheduled";
   publishAt?: string;
   views: number;
-  registrations: number;
+  registrations: number; // seats taken (confirmed registrations)
+  waitlistCount?: number; // people waiting for a seat
 };
 
 export type Registrant = {

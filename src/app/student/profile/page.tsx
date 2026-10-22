@@ -39,7 +39,8 @@ export default function StudentProfilePage() {
   }, [user]);
 
   useEffect(() => {
-    getMyRegistrations().then((regs) => {
+    getMyRegistrations().then((all) => {
+      const regs = all.filter((r) => r.status === "confirmed");
       setStats((s) => ({
         ...s,
         registered: regs.length,

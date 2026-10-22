@@ -43,14 +43,18 @@ export default function MyEventsPage() {
   const router = useRouter();
   const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [regsWithEvents, setRegsWithEvents] = useState<StudentRegistrationWithEvent[]>([]);
+  const [waitingRegs, setWaitingRegs] = useState<StudentRegistrationWithEvent[]>([]);
   const [bookmarks, setBookmarks] = useState<string[]>([]);
   const [registeredIds, setRegisteredIds] = useState<string[]>([]);
 
   useEffect(() => {
     getAdaptedEvents().then(setAllEvents).catch(console.error);
     getMyBookmarks().then(setBookmarks).catch(console.error);
-    getMyRegistrations().then((regs) => setRegisteredIds(regs.map((r) => r.event_id))).catch(console.error);
-    getMyRegistrationsWithEvents().then(setRegsWithEvents).catch(console.error);
+    getMyRegistrations().then((regs) => setRegisteredIds(regs.filter((r) => r.status === "confirmed").map((r) => r.event_id))).catch(console.error);
+    getMyRegistrationsWithEvents().then((all) => {
+      setRegsWithEvents(all.filter((r) => r.status === "confirmed"));
+      setWaitingRegs(all.filter((r) => r.status === "waitlist"));
+    }).catch(console.error);
   }, []);
 
   const toggleBookmark = async (id: string) => {
@@ -108,6 +112,17 @@ export default function MyEventsPage() {
             />
           </div>
         </div>
+
+        {waitingRegs.length > 0 && (
+          <div className="mt-3 rounded-xl bg-white/15 px-3 py-2.5 text-sm text-indigo-50">
+            <p className="font-semibold">On the waiting list ({waitingRegs.length})</p>
+            {waitingRegs.map((r) => (
+              <Link key={r.id} href={`/student/events/${r.event_id}`} className="block text-indigo-100 hover:text-white truncate">
+                {r.event_title}
+              </Link>
+            ))}
+          </div>
+        )}
 
         {/* Attendance rate */}
         {regsWithEvents.length > 0 && (

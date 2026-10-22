@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CATEGORY_COLORS, type Event } from "@/lib/mock-data";
 import { useAuth } from "@/contexts/auth-context";
-import { getAdaptedEvent, isRegisteredForEvent, didIAttend, getMyBookmarks, addBookmark, removeBookmark, registerForEvent, cancelRegistration, getMyEventSurvey } from "@/lib/db";
+import { getAdaptedEvent, getMyRegistrationState, didIAttend, getMyBookmarks, addBookmark, removeBookmark, registerForEvent, cancelRegistration, getMyEventSurvey } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -18,6 +18,7 @@ import {
   AlertCircle, FileText, Tag, History, ClipboardList,
 } from "lucide-react";
 import { EventBanner } from "@/components/shared/EventBanner";
+import CancelRegistrationDialog from "@/components/shared/CancelRegistrationDialog";
 
 export default function StudentEventDetailPage({ params }: PageProps<"/student/events/[id]">) {
   return (
@@ -36,15 +37,30 @@ function StudentEventDetailPageInner({ params }: { params: PageProps<"/student/e
   const [event, setEvent] = useState<Event | null | undefined>(undefined);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
+  const [onWaitlist, setOnWaitlist] = useState(false);
+  const [position, setPosition] = useState<number | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelBusy, setCancelBusy] = useState(false);
+  const [cancelError, setCancelError] = useState("");
+  const [notice, setNotice] = useState("");
   const [surveySubmitted, setSurveySubmitted] = useState(false);
   const [attended, setAttended] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [shareMsg, setShareMsg] = useState("");
 
+  const refreshRegistration = () =>
+    getMyRegistrationState(id)
+      .then((r) => {
+        setIsRegistered(r.status === "confirmed");
+        setOnWaitlist(r.status === "waitlist");
+        setPosition(r.position);
+      })
+      .catch(console.error);
+
   useEffect(() => {
     getAdaptedEvent(id).then(setEvent).catch(() => setEvent(null));
-    isRegisteredForEvent(id).then(setIsRegistered).catch(console.error);
+    refreshRegistration();
     getMyBookmarks().then((ids) => setIsBookmarked(ids.includes(id))).catch(console.error);
     getMyEventSurvey(id).then((s) => setSurveySubmitted(!!s)).catch(console.error);
     didIAttend(id).then(setAttended).catch(console.error);
@@ -69,22 +85,40 @@ function StudentEventDetailPageInner({ params }: { params: PageProps<"/student/e
   const isPastDeadline = new Date(event.registrationDeadline) < new Date();
 
   const handleRegister = async () => {
-    if (isRegistered || !user) return;
+    if (isRegistered || onWaitlist || !user) return;
     setRegistering(true);
     try {
-      await registerForEvent(id, {
+      const result = await registerForEvent(id, {
         name: user.name,
         email: user.email,
         department: user.department,
         year: user.year,
         fee: event.registrationFee,
       });
-      setIsRegistered(true);
       setShowConfirm(false);
+      setNotice(result === "waitlist" ? "You're on the waiting list. We'll move you up automatically if a seat opens." : "");
+      await refreshRegistration();
+      getAdaptedEvent(id).then(setEvent).catch(() => {});
     } catch (err) {
       console.error(err);
+      setNotice("Could not register. Please try again.");
     }
     setRegistering(false);
+  };
+
+  const handleCancel = async (reason: string) => {
+    setCancelBusy(true);
+    setCancelError("");
+    try {
+      await cancelRegistration(id, reason);
+      setCancelOpen(false);
+      setNotice(onWaitlist ? "You left the waiting list." : "Your registration was cancelled.");
+      await refreshRegistration();
+      getAdaptedEvent(id).then(setEvent).catch(() => {});
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : "Could not cancel. Please try again.");
+    }
+    setCancelBusy(false);
   };
 
   const handleAddToCalendar = () => {
@@ -109,9 +143,8 @@ function StudentEventDetailPageInner({ params }: { params: PageProps<"/student/e
   };
 
   const registrationButton = () => {
-    if (isRegistered) return null;
+    if (isRegistered || onWaitlist) return null;
     if (isPast) return <Button className="w-full" variant="outline" disabled>Event Ended</Button>;
-    if (isFull) return <Button className="w-full" variant="outline" disabled>Event Full</Button>;
     if (isPastDeadline) return <Button className="w-full" variant="outline" disabled>Registration Closed</Button>;
 
     // Paid event with ticket URL — redirect to external purchase link
@@ -128,7 +161,8 @@ function StudentEventDetailPageInner({ params }: { params: PageProps<"/student/e
     if (showConfirm) {
       return (
         <div className="border border-indigo-200 rounded-xl p-4 space-y-3 bg-indigo-50">
-          <p className="text-sm font-semibold text-indigo-900">Confirm your registration</p>
+          <p className="text-sm font-semibold text-indigo-900">{isFull ? "Join the waiting list" : "Confirm your registration"}</p>
+          {isFull && <p className="text-xs text-indigo-800">The event is full. If a seat opens, you are moved up automatically, in order, and we notify you.</p>}
           <div className="bg-white rounded-lg px-3 py-2.5 text-sm text-gray-900 font-medium border border-gray-200">
             {user?.name}
           </div>
@@ -148,7 +182,7 @@ function StudentEventDetailPageInner({ params }: { params: PageProps<"/student/e
 
     return (
       <Button className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2" onClick={() => setShowConfirm(true)}>
-        {event.registrationFee === 0 ? "Register for Free" : `Register — ₹${event.registrationFee}`}
+        {isFull ? "Event full: join waiting list" : event.registrationFee === 0 ? "Register for Free" : `Register — ₹${event.registrationFee}`}
       </Button>
     );
   };
@@ -330,10 +364,50 @@ function StudentEventDetailPageInner({ params }: { params: PageProps<"/student/e
               </p>
             </div>
 
+            {notice && (
+              <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 text-sm text-indigo-900">{notice}</div>
+            )}
+
+            {isFull && (event.waitlistCount ?? 0) > 0 && !onWaitlist && (
+              <p className="text-xs text-gray-500">Event full · {event.waitlistCount} on the waiting list</p>
+            )}
+
             {isRegistered && (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                <p className="text-sm font-medium text-green-800">You&apos;re registered!</p>
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3 space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                  <p className="text-sm font-medium text-green-800">You&apos;re registered!</p>
+                </div>
+                {!isPast && (
+                  <button
+                    type="button"
+                    onClick={() => { setCancelError(""); setCancelOpen(true); }}
+                    className="w-full py-2.5 rounded-lg border border-red-200 bg-white text-red-600 text-sm font-semibold hover:bg-red-50"
+                  >
+                    Cancel registration
+                  </button>
+                )}
+              </div>
+            )}
+
+            {onWaitlist && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                  <p className="text-sm font-medium text-amber-900">
+                    You&apos;re on the waiting list{position ? ` (position ${position})` : ""}
+                  </p>
+                </div>
+                <p className="text-xs text-amber-800">If a seat opens, you move up automatically and we notify you.</p>
+                {!isPast && (
+                  <button
+                    type="button"
+                    onClick={() => { setCancelError(""); setCancelOpen(true); }}
+                    className="w-full py-2.5 rounded-lg border border-amber-300 bg-white text-amber-800 text-sm font-semibold hover:bg-amber-100"
+                  >
+                    Leave waiting list
+                  </button>
+                )}
               </div>
             )}
 
@@ -431,10 +505,20 @@ function StudentEventDetailPageInner({ params }: { params: PageProps<"/student/e
         </div>
       </div>
 
+      <CancelRegistrationDialog
+        open={cancelOpen}
+        mode={onWaitlist ? "waitlist" : "seat"}
+        eventTitle={event.title}
+        busy={cancelBusy}
+        error={cancelError}
+        onClose={() => setCancelOpen(false)}
+        onConfirm={handleCancel}
+      />
+
       {/* Mobile sticky bottom register bar */}
       <div className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t border-gray-200 px-4 py-3 z-50">
         <div className="max-w-lg mx-auto flex items-center gap-3">
-          {!isPast && !isFull && !isPastDeadline && !isRegistered && (
+          {!isPast && !isPastDeadline && !isRegistered && !onWaitlist && (
             <div className="shrink-0 text-xs text-gray-500 leading-tight">
               <p className="font-medium text-gray-700">Closes</p>
               <p>{format(new Date(event.registrationDeadline), "MMM d")}</p>

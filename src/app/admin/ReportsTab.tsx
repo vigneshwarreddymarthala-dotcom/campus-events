@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getAdaptedEvents, getEventRegistrations, getEventSurveys } from "@/lib/db";
+import { getAdaptedEvents, getEventSeatRegistrations, getEventSurveys } from "@/lib/db";
 import { isEventPast, type Event, CATEGORIES } from "@/lib/mock-data";
 import { format } from "date-fns";
 import { BarChart2, Users, Star, CalendarDays, Printer, TrendingUp } from "lucide-react";
@@ -21,7 +21,7 @@ export default function ReportsTab() {
   useEffect(() => {
     getAdaptedEvents().then(async (events) => {
       const built = await Promise.all(events.map(async (ev) => {
-        const regs = await getEventRegistrations(ev.id).catch(() => []);
+        const regs = await getEventSeatRegistrations(ev.id).catch(() => []);
         const attended = regs.filter((r) => r.attended).length;
         const surveys = isEventPast(ev) ? await getEventSurveys(ev.id).catch(() => []) : [];
         const avgRating = surveys.length > 0

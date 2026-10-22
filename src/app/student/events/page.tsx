@@ -54,7 +54,7 @@ function StudentEventsPageInner() {
   useEffect(() => {
     getAdaptedEvents().then(setEvents).catch(console.error);
     getMyBookmarks().then(setBookmarks).catch(console.error);
-    getMyRegistrations().then((regs) => setRegistrations(regs.map((r) => r.event_id))).catch(console.error);
+    getMyRegistrations().then((regs) => setRegistrations(regs.filter((r) => r.status === "confirmed").map((r) => r.event_id))).catch(console.error);
   }, []);
 
   const toggleBookmark = async (id: string) => {

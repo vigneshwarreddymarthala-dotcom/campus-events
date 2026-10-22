@@ -20,7 +20,7 @@ async function assertCanManageEvents(): Promise<void> {
   if (data?.role !== "admin" && data?.role !== "event_head") throw new Error("Forbidden: organizer only");
 }
 
-export function adaptDbEvent(e: DbEvent, registrationCount = 0): Event {
+export function adaptDbEvent(e: DbEvent, registrationCount = 0, waitlistCount = 0): Event {
   let parsedStatus = e.status as Event["status"];
   let publishAt: string | undefined = e.publish_at ?? undefined;
 
@@ -75,16 +75,21 @@ export function adaptDbEvent(e: DbEvent, registrationCount = 0): Event {
     publishAt,
     views: 0,
     registrations: registrationCount,
+    waitlistCount,
   };
 }
 
-async function getRegistrationCounts(): Promise<Record<string, number>> {
+type RegistrationCounts = Record<string, { seats: number; waiting: number }>;
+
+async function getRegistrationCounts(): Promise<RegistrationCounts> {
   // Security-definer function: everyone sees the real totals while row-level
-  // security keeps individual registrations private.
+  // security keeps individual registrations private. "seats" = confirmed, "waiting" = on the waiting list.
   const supabase = createClient();
   const { data } = await supabase.rpc("event_registration_counts");
-  const counts: Record<string, number> = {};
-  ((data ?? []) as { event_id: string; registrations: number }[]).forEach((r) => { counts[r.event_id] = Number(r.registrations); });
+  const counts: RegistrationCounts = {};
+  ((data ?? []) as { event_id: string; registrations: number; waiting?: number }[]).forEach((r) => {
+    counts[r.event_id] = { seats: Number(r.registrations), waiting: Number(r.waiting ?? 0) };
+  });
   return counts;
 }
 
@@ -115,6 +120,8 @@ export type DbEvent = {
   updated_at: string;
 };
 
+export type RegistrationStatus = "confirmed" | "waitlist" | "cancelled";
+
 export type DbRegistration = {
   id: string;
   event_id: string;
@@ -126,6 +133,10 @@ export type DbRegistration = {
   payment_status: string;
   attended: boolean;
   registered_at: string;
+  status: RegistrationStatus;
+  cancel_reason: string | null;
+  cancelled_at: string | null;
+  cancelled_from: string | null;
 };
 
 // ── Events ───────────────────────────────────────────────────
@@ -142,7 +153,7 @@ export async function getEvents(): Promise<DbEvent[]> {
 
 export async function getAdaptedEvents(): Promise<Event[]> {
   const [events, counts] = await Promise.all([getEvents(), getRegistrationCounts()]);
-  return events.map((e) => adaptDbEvent(e, counts[e.id] ?? 0));
+  return events.map((e) => adaptDbEvent(e, counts[e.id]?.seats ?? 0, counts[e.id]?.waiting ?? 0));
 }
 
 export async function getEvent(id: string): Promise<DbEvent | null> {
@@ -158,7 +169,7 @@ export async function getEvent(id: string): Promise<DbEvent | null> {
 
 export async function getAdaptedEvent(id: string): Promise<Event | null> {
   const [raw, counts] = await Promise.all([getEvent(id), getRegistrationCounts()]);
-  return raw ? adaptDbEvent(raw, counts[id] ?? 0) : null;
+  return raw ? adaptDbEvent(raw, counts[id]?.seats ?? 0, counts[id]?.waiting ?? 0) : null;
 }
 
 export async function createEvent(payload: Omit<DbEvent, "id" | "created_at" | "updated_at">): Promise<DbEvent> {
@@ -203,6 +214,7 @@ export async function getMyRegistrations(): Promise<DbRegistration[]> {
     .from("registrations")
     .select("*")
     .eq("user_id", user.id)
+    .neq("status", "cancelled")
     .order("registered_at", { ascending: false });
   if (error) throw error;
   return data ?? [];
@@ -216,6 +228,7 @@ export async function getMyRegistrationsWithEvents(): Promise<StudentRegistratio
     .from("registrations")
     .select("*, events(title, date, time, end_time, venue, registration_fee)")
     .eq("user_id", user.id)
+    .neq("status", "cancelled")
     .order("registered_at", { ascending: false });
   if (error) throw error;
   return (data ?? []).map((r: Record<string, unknown>) => {
@@ -231,6 +244,10 @@ export async function getMyRegistrationsWithEvents(): Promise<StudentRegistratio
       payment_status: r.payment_status as string,
       attended: r.attended as boolean,
       registered_at: r.registered_at as string,
+      status: (r.status as RegistrationStatus) ?? "confirmed",
+      cancel_reason: (r.cancel_reason as string | null) ?? null,
+      cancelled_at: (r.cancelled_at as string | null) ?? null,
+      cancelled_from: (r.cancelled_from as string | null) ?? null,
       event_title: ev.title as string ?? "",
       event_date: ev.date as string ?? "",
       event_time: ev.time as string ?? "",
@@ -241,6 +258,12 @@ export async function getMyRegistrationsWithEvents(): Promise<StudentRegistratio
   });
 }
 
+// Only students who hold a seat (not waiting, not cancelled): use this for counts, attendance and certificates.
+export async function getEventSeatRegistrations(eventId: string): Promise<DbRegistration[]> {
+  return (await getEventRegistrations(eventId)).filter((r) => r.status === "confirmed");
+}
+
+// Every registration of an event, whatever its status (organizer lists).
 export async function getEventRegistrations(eventId: string): Promise<DbRegistration[]> {
   const supabase = createClient();
   const { data, error } = await supabase
@@ -252,38 +275,71 @@ export async function getEventRegistrations(eventId: string): Promise<DbRegistra
   return data ?? [];
 }
 
+// Returns "confirmed" if a seat was free, or "waitlist" if the event is full. The database decides.
 export async function registerForEvent(eventId: string, info: {
   name: string;
   email: string;
   department?: string;
   year?: string;
   fee: number;
-}): Promise<void> {
+}): Promise<"confirmed" | "waitlist"> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
-  const { error } = await supabase.from("registrations").insert({
-    event_id: eventId,
-    user_id: user.id,
-    student_name: info.name,
-    student_email: info.email,
-    student_department: info.department ?? null,
-    student_year: info.year ?? null,
-    payment_status: info.fee === 0 ? "free" : "pending",
+  const { data, error } = await supabase.rpc("register_for_event", {
+    p_event_id: eventId,
+    p_name: info.name,
+    p_email: info.email,
+    p_department: info.department ?? null,
+    p_year: info.year ?? null,
+    p_payment_status: info.fee === 0 ? "free" : "pending",
   });
   if (error) throw error;
+  return data === "waitlist" ? "waitlist" : "confirmed";
 }
 
-export async function cancelRegistration(eventId: string): Promise<void> {
+// Cancel a seat (a reason is required) or leave the waiting list (reason optional).
+// The freed seat goes to the first student waiting.
+export async function cancelRegistration(eventId: string, reason = ""): Promise<{ was: string; moved_up: number }> {
+  const res = await fetch("/api/registrations/cancel", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ eventId, reason }),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error ?? "Could not cancel. Please try again.");
+  return json;
+}
+
+export type MyRegistrationState = { status: RegistrationStatus | null; position: number | null };
+
+export async function getMyRegistrationState(eventId: string): Promise<MyRegistrationState> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
-  const { error } = await supabase
+  if (!user) return { status: null, position: null };
+  const { data } = await supabase
     .from("registrations")
-    .delete()
+    .select("status")
     .eq("event_id", eventId)
-    .eq("user_id", user.id);
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const status = (data?.status as RegistrationStatus | undefined) ?? null;
+  let position: number | null = null;
+  if (status === "waitlist") {
+    const { data: pos } = await supabase.rpc("my_waitlist_position", { p_event_id: eventId });
+    position = typeof pos === "number" ? pos : null;
+  }
+  return { status, position };
+}
+
+// Organizer: move a student between Registered and the Waiting list.
+export async function setRegistrationStatus(registrationId: string, status: "confirmed" | "waitlist"): Promise<void> {
+  await assertCanManageEvents();
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("set_registration_status", { p_registration_id: registrationId, p_status: status });
   if (error) throw error;
+  const r = data as { user_id: string; event_id: string; title: string; moved_up: boolean };
+  if (r?.moved_up) pushToPhones([r.user_id], "You're in!", `A spot opened up for ${r.title}. Your registration is now confirmed.`, r.event_id);
 }
 
 // True only if the organizer (or the QR check-in) marked this student present at the event.
@@ -309,6 +365,7 @@ export async function isRegisteredForEvent(eventId: string): Promise<boolean> {
     .select("id")
     .eq("event_id", eventId)
     .eq("user_id", user.id)
+    .eq("status", "confirmed")
     .maybeSingle();
   return !!data;
 }
@@ -631,6 +688,7 @@ export async function getStudentRegistrationsWithEvents(userId: string): Promise
     .from("registrations")
     .select("*, events(title, date, time, end_time, venue, registration_fee)")
     .eq("user_id", userId)
+    .eq("status", "confirmed")
     .order("registered_at", { ascending: false });
   if (error) throw error;
   return (data ?? []).map((r: Record<string, unknown>) => {
@@ -646,6 +704,10 @@ export async function getStudentRegistrationsWithEvents(userId: string): Promise
       payment_status: r.payment_status as string,
       attended: r.attended as boolean,
       registered_at: r.registered_at as string,
+      status: (r.status as RegistrationStatus) ?? "confirmed",
+      cancel_reason: (r.cancel_reason as string | null) ?? null,
+      cancelled_at: (r.cancelled_at as string | null) ?? null,
+      cancelled_from: (r.cancelled_from as string | null) ?? null,
       event_title: ev.title as string ?? "",
       event_date: ev.date as string ?? "",
       event_time: ev.time as string ?? "",

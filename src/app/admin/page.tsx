@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { isEventPast, type Event, CATEGORIES } from "@/lib/mock-data";
-import { getAdaptedEvents, getEventRegistrations, getEventSurveys, type DbRegistration } from "@/lib/db";
+import { getAdaptedEvents, getEventSeatRegistrations, getEventSurveys, type DbRegistration } from "@/lib/db";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -37,7 +37,7 @@ export default function AdminDashboard() {
       const eventRegCounts: { title: string; regs: number; capacity: number }[] = [];
 
       await Promise.all(evs.map(async (ev) => {
-        const regs = await getEventRegistrations(ev.id).catch(() => []);
+        const regs = await getEventSeatRegistrations(ev.id).catch(() => []);
         regs.forEach((r) => {
           allRegs.push({ ...r, eventTitle: ev.title });
           if (r.attended) attended++;

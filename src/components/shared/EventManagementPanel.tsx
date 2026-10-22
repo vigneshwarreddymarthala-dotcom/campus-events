@@ -86,7 +86,7 @@ export default function EventManagementPanel({
 
   const actionTiles = [
     { key: "qr", label: "Check-in QR", hint: "Show the code at the door", icon: QrCode, color: "text-indigo-600", bg: "bg-indigo-50", onClick: () => setShowQR(true) },
-    { key: "attendees", label: "Registrations", hint: `${event.registrations} registered`, icon: Users, color: "text-emerald-600", bg: "bg-emerald-50", onClick: () => setActiveTab("attendees") },
+    { key: "attendees", label: "Registrations", hint: `${event.registrations} registered${event.waitlistCount ? ` · ${event.waitlistCount} waiting` : ""}`, icon: Users, color: "text-emerald-600", bg: "bg-emerald-50", onClick: () => setActiveTab("attendees") },
     { key: "announce", label: "Notify students", hint: "Send an update", icon: Megaphone, color: "text-amber-600", bg: "bg-amber-50", onClick: () => setActiveTab("announce") },
     { key: "surveys", label: "Survey", hint: "Questions and answers", icon: Star, color: "text-pink-600", bg: "bg-pink-50", onClick: () => setActiveTab("surveys") },
     { key: "share", label: shared ? "Link copied!" : "Share event", hint: "Send the link", icon: shared ? Check : Share2, color: "text-blue-600", bg: "bg-blue-50", onClick: shareEvent },

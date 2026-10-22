@@ -1,9 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabase } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/server";
+import { sendExpoPush } from "@/lib/expo-push";
 
 const STAFF_ROLES = ["admin", "super_admin", "event_head"];
-const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
 
 // Sends a phone push notification to the given students. Called right after an
 // organizer saves an in-app notification, so the message also reaches lock screens.
@@ -36,34 +36,6 @@ export async function POST(req: NextRequest) {
   const admin = createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
     auth: { persistSession: false },
   });
-  const { data: rows } = await admin.from("push_tokens").select("token").in("user_id", userIds);
-  const tokens = [...new Set((rows ?? []).map((r) => r.token as string))].filter((t) => t.startsWith("ExponentPushToken"));
-  if (tokens.length === 0) return NextResponse.json({ sent: 0, devices: 0 });
-
-  let sent = 0;
-  const dead: string[] = [];
-  for (let i = 0; i < tokens.length; i += 100) {
-    const batch = tokens.slice(i, i + 100);
-    const res = await fetch(EXPO_PUSH_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(
-        batch.map((to) => ({
-          to,
-          title,
-          body: message,
-          sound: "default",
-          channelId: "default",
-          data: body?.eventId ? { eventId: body.eventId } : {},
-        }))
-      ),
-    }).catch(() => null);
-    const json = await res?.json().catch(() => null);
-    (json?.data ?? []).forEach((t: { status: string; details?: { error?: string } }, idx: number) => {
-      if (t.status === "ok") sent++;
-      else if (t.details?.error === "DeviceNotRegistered") dead.push(batch[idx]);
-    });
-  }
-  if (dead.length) await admin.from("push_tokens").delete().in("token", dead);
-  return NextResponse.json({ sent, devices: tokens.length });
+  const result = await sendExpoPush(admin, userIds, title, message, body?.eventId ?? null);
+  return NextResponse.json(result);
 }

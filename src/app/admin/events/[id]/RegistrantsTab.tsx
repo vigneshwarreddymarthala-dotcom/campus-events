@@ -3,11 +3,11 @@
 import { use, useState, useEffect } from "react";
 import Link from "next/link";
 import { type Event } from "@/lib/mock-data";
-import { getAdaptedEvent, getEventRegistrations, toggleAttendance, type DbRegistration } from "@/lib/db";
+import { getAdaptedEvent, getEventRegistrations, toggleAttendance, setRegistrationStatus, type DbRegistration } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
-import { ArrowLeft, Search, Download, CheckCircle2, XCircle, QrCode, Users, Bell, X, Award } from "lucide-react";
+import { ArrowLeft, Search, Download, CheckCircle2, XCircle, QrCode, Users, Bell, X, Award, Clock, Ban } from "lucide-react";
 import NotificationModal from "@/components/shared/NotificationModal";
 import QRCode from "react-qr-code";
 
@@ -19,28 +19,56 @@ export default function RegistrantsTab({ id }: { id: string }) {
   const [search, setSearch] = useState("");
   const [attendance, setAttendance] = useState<Record<string, boolean>>({});
   const [modal, setModal] = useState<ModalTarget | null>(null);
+  const [view, setView] = useState<"registered" | "waiting" | "cancelled">("registered");
+  const [moving, setMoving] = useState<string | null>(null);
 
 
-  useEffect(() => {
+  const load = () => {
     getAdaptedEvent(id).then(setEvent).catch(() => setEvent(null));
-    getEventRegistrations(id).then((regs) => {
+    return getEventRegistrations(id).then((regs) => {
       setRegistrants(regs);
       setAttendance(Object.fromEntries(regs.map((r) => [r.id, r.attended])));
     }).catch(console.error);
+  };
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   if (event === undefined) return <div className="text-center py-20 text-gray-400">Loading...</div>;
   if (!event) return <div className="text-center py-20 text-gray-500">Event not found.</div>;
 
-  const filtered = registrants.filter(
-    (r) =>
-      r.student_name.toLowerCase().includes(search.toLowerCase()) ||
-      r.student_email.toLowerCase().includes(search.toLowerCase()) ||
-      (r.student_department ?? "").toLowerCase().includes(search.toLowerCase())
-  );
+  // Three groups: people with a seat, people waiting (in join order), and people who cancelled (newest first).
+  const confirmedList = registrants.filter((r) => r.status === "confirmed");
+  const waitingList = registrants.filter((r) => r.status === "waitlist")
+    .sort((a, b) => new Date(a.registered_at).getTime() - new Date(b.registered_at).getTime());
+  const cancelledList = registrants.filter((r) => r.status === "cancelled")
+    .sort((a, b) => new Date(b.cancelled_at ?? 0).getTime() - new Date(a.cancelled_at ?? 0).getTime());
 
-  const attendedCount = Object.values(attendance).filter(Boolean).length;
-  const noShows = registrants.filter((r) => !attendance[r.id] && r.user_id);
+  const matches = (r: DbRegistration) =>
+    r.student_name.toLowerCase().includes(search.toLowerCase()) ||
+    r.student_email.toLowerCase().includes(search.toLowerCase()) ||
+    (r.student_department ?? "").toLowerCase().includes(search.toLowerCase());
+  const filtered = confirmedList.filter(matches);
+  const filteredWaiting = waitingList.filter(matches);
+  const filteredCancelled = cancelledList.filter(matches);
+
+  const attendedCount = confirmedList.filter((r) => attendance[r.id]).length;
+  const noShows = confirmedList.filter((r) => !attendance[r.id] && r.user_id);
+  const isFull = event.registrations >= event.capacity;
+
+  const moveUp = async (r: DbRegistration) => {
+    if (isFull && !window.confirm(`The event is full (${event.registrations}/${event.capacity}). Move ${r.student_name} to registered anyway?`)) return;
+    setMoving(r.id);
+    try {
+      await setRegistrationStatus(r.id, "confirmed");
+      await load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Could not move this student.");
+    }
+    setMoving(null);
+  };
 
   const handleToggleAttendance = async (regId: string) => {
     const newVal = !attendance[regId];
@@ -66,7 +94,7 @@ export default function RegistrantsTab({ id }: { id: string }) {
   };
 
   const openNotifyAll = () => {
-    const withUserId = registrants.filter((r) => r.user_id);
+    const withUserId = confirmedList.filter((r) => r.user_id);
     if (withUserId.length === 0) return;
     setModal({
       recipients: withUserId.map((r) => ({ userId: r.user_id, name: r.student_name })),
@@ -76,7 +104,7 @@ export default function RegistrantsTab({ id }: { id: string }) {
   };
 
   const printBulkCertificates = () => {
-    const attended = registrants.filter((r) => r.attended);
+    const attended = confirmedList.filter((r) => r.attended);
     if (attended.length === 0) { alert("No attended students to generate certificates for."); return; }
     const win = window.open("", "_blank");
     if (!win) return;
@@ -97,13 +125,16 @@ export default function RegistrantsTab({ id }: { id: string }) {
   };
 
   const exportCSV = () => {
-    const headers = ["Name", "Email", "Year", "Department", "Payment", "Registered At", "Attended"];
-    const rows = registrants.map((r) => [
+    const headers = ["Name", "Email", "Year", "Department", "Payment", "Registered At", "Attended", "Status", "Cancel reason", "Cancelled At"];
+    const q = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    const rows = [...confirmedList, ...waitingList, ...cancelledList].map((r) => [
       r.student_name, r.student_email, r.student_year ?? "", r.student_department ?? "",
       r.payment_status, format(new Date(r.registered_at), "yyyy-MM-dd HH:mm"),
       attendance[r.id] ? "Yes" : "No",
-    ]);
-    const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
+      r.status === "confirmed" ? "Registered" : r.status === "waitlist" ? "Waiting" : "Cancelled",
+      r.cancel_reason ?? "", r.cancelled_at ? format(new Date(r.cancelled_at), "yyyy-MM-dd HH:mm") : "",
+    ].map((v) => q(String(v))));
+    const csv = [headers.map(q), ...rows].map((row) => row.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -155,21 +186,46 @@ export default function RegistrantsTab({ id }: { id: string }) {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         {[
-          { label: "Total Registered", value: registrants.length, icon: Users, color: "text-indigo-600", bg: "bg-indigo-50" },
-          { label: "Attended", value: attendedCount, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50" },
-          { label: "No-show", value: registrants.length - attendedCount, icon: XCircle, color: "text-gray-500", bg: "bg-gray-100" },
+          { label: "Registered", value: `${confirmedList.length}`, sub: `of ${event.capacity} seats`, icon: Users, color: "text-indigo-600", bg: "bg-indigo-50", go: "registered" as const },
+          { label: "Attended", value: `${attendedCount}`, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50", go: "registered" as const },
+          { label: "No-show", value: `${confirmedList.length - attendedCount}`, icon: XCircle, color: "text-gray-500", bg: "bg-gray-100", go: "registered" as const },
+          { label: "Waiting list", value: `${waitingList.length}`, icon: Clock, color: "text-amber-600", bg: "bg-amber-50", go: "waiting" as const },
+          { label: "Cancelled", value: `${cancelledList.length}`, icon: Ban, color: "text-red-500", bg: "bg-red-50", go: "cancelled" as const },
         ].map((s) => (
-          <div key={s.label} className="bg-white rounded-2xl border border-gray-200 p-4 flex items-center gap-3">
-            <div className={`w-10 h-10 ${s.bg} rounded-xl flex items-center justify-center`}>
+          <button
+            key={s.label}
+            type="button"
+            onClick={() => setView(s.go)}
+            className="text-left bg-white rounded-2xl border border-gray-200 p-4 flex items-center gap-3 hover:border-indigo-200 transition-colors"
+          >
+            <div className={`w-10 h-10 ${s.bg} rounded-xl flex items-center justify-center shrink-0`}>
               <s.icon className={`w-5 h-5 ${s.color}`} />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-xl font-bold text-gray-900">{s.value}</p>
-              <p className="text-xs text-gray-500">{s.label}</p>
+              <p className="text-xs text-gray-500 truncate">{s.label}{"sub" in s && s.sub ? ` · ${s.sub}` : ""}</p>
             </div>
-          </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Which list to show */}
+      <div className="flex gap-1.5 bg-gray-100/70 p-1 rounded-xl w-fit max-w-full overflow-x-auto">
+        {([
+          ["registered", `Registered (${confirmedList.length})`],
+          ["waiting", `Waiting list (${waitingList.length})`],
+          ["cancelled", `Cancelled (${cancelledList.length})`],
+        ] as const).map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => setView(k)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${view === k ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-800"}`}
+          >
+            {label}
+          </button>
         ))}
       </div>
 
@@ -185,6 +241,7 @@ export default function RegistrantsTab({ id }: { id: string }) {
       </div>
 
       {/* Table */}
+      {view === "registered" && (
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[720px]">
@@ -199,7 +256,7 @@ export default function RegistrantsTab({ id }: { id: string }) {
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-4 py-10 text-center text-gray-400">
-                    {registrants.length === 0 ? "No registrations yet." : "No results found."}
+                    {confirmedList.length === 0 ? "No registrations yet." : "No results found."}
                   </td>
                 </tr>
               )}
@@ -257,6 +314,80 @@ export default function RegistrantsTab({ id }: { id: string }) {
           </table>
         </div>
       </div>
+
+      )}
+
+      {view === "waiting" && (
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100 bg-amber-50/50 text-sm text-amber-900">
+            In join order. When someone cancels, the first person here takes the seat automatically. You can also move someone up yourself.
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[640px]">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>{["Place", "Name", "Email", "Dept.", "Joined", ""].map((h) => (
+                  <th key={h} className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">{h}</th>
+                ))}</tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredWaiting.length === 0 && (
+                  <tr><td colSpan={6} className="px-4 py-10 text-center text-gray-400">{waitingList.length === 0 ? "Nobody is waiting." : "No results found."}</td></tr>
+                )}
+                {filteredWaiting.map((r) => (
+                  <tr key={r.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-gray-400 font-mono">#{waitingList.indexOf(r) + 1}</td>
+                    <td className="px-4 py-3 font-medium text-gray-900">{r.student_name}</td>
+                    <td className="px-4 py-3 text-gray-500">{r.student_email}</td>
+                    <td className="px-4 py-3 text-gray-500">{r.student_department ?? "—"}</td>
+                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{format(new Date(r.registered_at), "MMM d, HH:mm")}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => moveUp(r)}
+                        disabled={moving === r.id}
+                        className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-60 whitespace-nowrap"
+                      >
+                        {moving === r.id ? "Moving…" : "Move to registered"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {view === "cancelled" && (
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[720px]">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>{["Name", "Email", "Reason", "Cancelled", "Was"].map((h) => (
+                  <th key={h} className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">{h}</th>
+                ))}</tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredCancelled.length === 0 && (
+                  <tr><td colSpan={5} className="px-4 py-10 text-center text-gray-400">{cancelledList.length === 0 ? "No cancellations." : "No results found."}</td></tr>
+                )}
+                {filteredCancelled.map((r) => (
+                  <tr key={r.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-900">{r.student_name}</td>
+                    <td className="px-4 py-3 text-gray-500">{r.student_email}</td>
+                    <td className="px-4 py-3 text-gray-700 max-w-xs">{r.cancel_reason ?? <span className="text-gray-400">No reason given</span>}</td>
+                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{r.cancelled_at ? format(new Date(r.cancelled_at), "MMM d, HH:mm") : "—"}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${r.cancelled_from === "waitlist" ? "bg-amber-100 text-amber-800" : "bg-gray-100 text-gray-700"}`}>
+                        {r.cancelled_from === "waitlist" ? "Was waiting" : "Was registered"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Notification modal */}
       {modal && (

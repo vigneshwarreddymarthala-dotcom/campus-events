@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
-import { getAdaptedEvents, getEventRegistrations, type DbRegistration } from "@/lib/db";
+import { getAdaptedEvents, getEventSeatRegistrations, type DbRegistration } from "@/lib/db";
 import { type Event, isEventPast } from "@/lib/mock-data";
 import { CheckCircle2, XCircle, Users, TrendingUp, CalendarDays, Search, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,7 @@ export default function AttendancePage() {
     getAdaptedEvents().then(async (events) => {
       const results = await Promise.all(
         events.map(async (event) => {
-          const regs = await getEventRegistrations(event.id).catch(() => [] as DbRegistration[]);
+          const regs = await getEventSeatRegistrations(event.id).catch(() => [] as DbRegistration[]);
           const attended = regs.filter((r) => r.attended).length;
           return {
             event,

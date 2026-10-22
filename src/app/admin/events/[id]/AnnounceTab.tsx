@@ -5,7 +5,7 @@ import { Megaphone, Send, CheckCircle2, AlertCircle, Users } from "lucide-react"
 import { Input } from "@/components/ui/input";
 import { getAllStudents, getEventRegistrations, sendNotificationToUsers } from "@/lib/db";
 
-type Audience = "registered" | "all";
+type Audience = "registered" | "waiting" | "all";
 
 const TEMPLATES = [
   { label: "Reminder", title: "Reminder", message: "Don't forget: this event is coming up soon. See you there!" },
@@ -16,6 +16,7 @@ const TEMPLATES = [
 export default function AnnounceTab({ id, eventTitle }: { id: string; eventTitle: string }) {
   const [audience, setAudience] = useState<Audience>("registered");
   const [registeredIds, setRegisteredIds] = useState<string[] | null>(null);
+  const [waitingIds, setWaitingIds] = useState<string[] | null>(null);
   const [allIds, setAllIds] = useState<string[] | null>(null); // null = not allowed to list all students
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
@@ -24,14 +25,17 @@ export default function AnnounceTab({ id, eventTitle }: { id: string; eventTitle
 
   useEffect(() => {
     getEventRegistrations(id)
-      .then((regs) => setRegisteredIds([...new Set(regs.map((r) => r.user_id).filter(Boolean))]))
-      .catch(() => setRegisteredIds([]));
+      .then((regs) => {
+        setRegisteredIds([...new Set(regs.filter((r) => r.status === "confirmed").map((r) => r.user_id).filter(Boolean))]);
+        setWaitingIds([...new Set(regs.filter((r) => r.status === "waitlist").map((r) => r.user_id).filter(Boolean))]);
+      })
+      .catch(() => { setRegisteredIds([]); setWaitingIds([]); });
     getAllStudents()
       .then((s) => setAllIds(s.map((p) => p.id)))
       .catch(() => setAllIds(null));
   }, [id]);
 
-  const recipients = audience === "all" ? allIds ?? [] : registeredIds ?? [];
+  const recipients = audience === "all" ? allIds ?? [] : audience === "waiting" ? waitingIds ?? [] : registeredIds ?? [];
 
   const send = async () => {
     if (!title.trim() || !message.trim() || recipients.length === 0) return;
@@ -65,9 +69,10 @@ export default function AnnounceTab({ id, eventTitle }: { id: string; eventTitle
 
       <div>
         <p className="text-xs font-medium text-gray-500 mb-2">Who should get it?</p>
-        <div className="grid sm:grid-cols-2 gap-2">
+        <div className="grid sm:grid-cols-3 gap-2">
           {([
             { key: "registered", label: "Registered students", count: registeredIds?.length },
+            { key: "waiting", label: "Waiting list", count: waitingIds?.length },
             { key: "all", label: "All students", count: allIds?.length, disabled: allIds === null },
           ] as { key: Audience; label: string; count?: number; disabled?: boolean }[]).map((o) => (
             <button
