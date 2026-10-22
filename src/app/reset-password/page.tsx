@@ -28,11 +28,38 @@ function ResetPasswordPageInner() {
 
   useEffect(() => {
     const supabase = createClient();
-    // The reset-password link puts the user into a temporary recovery session.
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setReady(!!session);
-      if (!session) setError("This reset link is invalid or has expired. Request a new one.");
-    });
+    const fail = () => setError("This reset link is invalid or has expired. Request a new one.");
+    // The email link can arrive in three shapes; accept all of them so it works on any device.
+    (async () => {
+      try {
+        const url = new URL(window.location.href);
+        const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+        const code = url.searchParams.get("code");
+        const tokenHash = url.searchParams.get("token_hash");
+        const accessToken = hash.get("access_token");
+        const refreshToken = hash.get("refresh_token");
+
+        if (accessToken && refreshToken) {
+          const { error: e } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+          if (e) return fail();
+        } else if (code) {
+          const { error: e } = await supabase.auth.exchangeCodeForSession(code);
+          if (e) return fail();
+        } else if (tokenHash) {
+          const { error: e } = await supabase.auth.verifyOtp({ type: "recovery", token_hash: tokenHash });
+          if (e) return fail();
+        } else if (hash.get("error")) {
+          return fail();
+        }
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return fail();
+        window.history.replaceState(null, "", window.location.pathname); // keep tokens out of the address bar
+        setReady(true);
+      } catch {
+        fail();
+      }
+    })();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
