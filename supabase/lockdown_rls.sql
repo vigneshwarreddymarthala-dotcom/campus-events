@@ -80,3 +80,26 @@ create policy lock_ja_insert on public.job_applications for insert with check (a
 create policy lock_ja_select_own on public.job_applications for select using (auth.uid() = user_id);
 create policy lock_ja_select_staff on public.job_applications for select using (current_user_role() in ('admin','super_admin'));
 create policy lock_ja_update_staff on public.job_applications for update using (current_user_role() in ('admin','super_admin'));
+
+-- Nobody can change their own role (only a super admin, or the service role)
+create or replace function public.prevent_role_change() returns trigger language plpgsql as $$
+begin
+  if new.role is distinct from old.role
+     and current_user in ('authenticated','anon')
+     and coalesce(public.current_user_role(), '') <> 'super_admin' then
+    raise exception 'Only a super admin can change roles';
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists profiles_prevent_role_change on public.profiles;
+create trigger profiles_prevent_role_change before update of role on public.profiles
+  for each row execute function public.prevent_role_change();
+
+-- Public registration totals per event (individual registrations stay private)
+create or replace function public.event_registration_counts()
+returns table(event_id text, registrations bigint)
+language sql stable security definer set search_path = public as $$
+  select r.event_id::text, count(*)::bigint from public.registrations r group by r.event_id
+$$;
+grant execute on function public.event_registration_counts() to anon, authenticated;
