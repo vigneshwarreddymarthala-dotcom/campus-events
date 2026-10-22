@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect } from "react";
 import Link from "next/link";
-import { type Event } from "@/lib/mock-data";
+import { type Event, isEventOver } from "@/lib/mock-data";
 import { getAdaptedEvent, getEventRegistrations, toggleAttendance, setRegistrationStatus, type DbRegistration } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +57,7 @@ export default function RegistrantsTab({ id }: { id: string }) {
   const attendedCount = confirmedList.filter((r) => attendance[r.id]).length;
   const noShows = confirmedList.filter((r) => !attendance[r.id] && r.user_id);
   const isFull = event.registrations >= event.capacity;
+  const over = isEventOver(event); // "no-show" only makes sense once the event has ended
 
   const moveUp = async (r: DbRegistration) => {
     if (isFull && !window.confirm(`The event is full (${event.registrations}/${event.capacity}). Move ${r.student_name} to registered anyway?`)) return;
@@ -154,7 +155,7 @@ export default function RegistrantsTab({ id }: { id: string }) {
             <p className="text-gray-500 text-sm mt-1 truncate max-w-[200px] sm:max-w-none">{event.title}</p>
           </div>
           <div className="flex gap-2 shrink-0 flex-wrap">
-            {noShows.length > 0 && (
+            {over && noShows.length > 0 && (
               <Button
                 variant="outline"
                 className="gap-2 text-sm px-3 border-orange-200 text-orange-600 hover:bg-orange-50"
@@ -190,7 +191,7 @@ export default function RegistrantsTab({ id }: { id: string }) {
         {[
           { label: "Registered", value: `${confirmedList.length}`, sub: `of ${event.capacity} seats`, icon: Users, color: "text-indigo-600", bg: "bg-indigo-50", go: "registered" as const },
           { label: "Attended", value: `${attendedCount}`, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50", go: "registered" as const },
-          { label: "No-show", value: `${confirmedList.length - attendedCount}`, icon: XCircle, color: "text-gray-500", bg: "bg-gray-100", go: "registered" as const },
+          { label: over ? "No-show" : "Not checked in yet", value: `${confirmedList.length - attendedCount}`, icon: XCircle, color: "text-gray-500", bg: "bg-gray-100", go: "registered" as const },
           { label: "Waiting list", value: `${waitingList.length}`, icon: Clock, color: "text-amber-600", bg: "bg-amber-50", go: "waiting" as const },
           { label: "Cancelled", value: `${cancelledList.length}`, icon: Ban, color: "text-red-500", bg: "bg-red-50", go: "cancelled" as const },
         ].map((s) => (
