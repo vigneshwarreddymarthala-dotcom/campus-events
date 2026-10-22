@@ -5,11 +5,11 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CATEGORY_COLORS, type Event } from "@/lib/mock-data";
 import { useAuth } from "@/contexts/auth-context";
-import { getAdaptedEvent, isRegisteredForEvent, getMyBookmarks, addBookmark, removeBookmark, registerForEvent, cancelRegistration, getMyEventSurvey } from "@/lib/db";
+import { getAdaptedEvent, isRegisteredForEvent, didIAttend, getMyBookmarks, addBookmark, removeBookmark, registerForEvent, cancelRegistration, getMyEventSurvey } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { isEventPast } from "@/lib/mock-data";
+import { isEventPast, isEventOver } from "@/lib/mock-data";
 import { googleCalendarUrl, downloadIcs } from "@/lib/calendar";
 import { CalendarPlus } from "lucide-react";
 import {
@@ -37,6 +37,7 @@ function StudentEventDetailPageInner({ params }: { params: PageProps<"/student/e
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
   const [surveySubmitted, setSurveySubmitted] = useState(false);
+  const [attended, setAttended] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [shareMsg, setShareMsg] = useState("");
@@ -46,6 +47,7 @@ function StudentEventDetailPageInner({ params }: { params: PageProps<"/student/e
     isRegisteredForEvent(id).then(setIsRegistered).catch(console.error);
     getMyBookmarks().then((ids) => setIsBookmarked(ids.includes(id))).catch(console.error);
     getMyEventSurvey(id).then((s) => setSurveySubmitted(!!s)).catch(console.error);
+    didIAttend(id).then(setAttended).catch(console.error);
   }, [id]);
 
   if (event === undefined) {
@@ -361,8 +363,14 @@ function StudentEventDetailPageInner({ params }: { params: PageProps<"/student/e
               </div>
             )}
 
-            {/* Survey button — only for past events the student registered for */}
-            {isPast && isRegistered && (
+            {/* Survey — only for students marked present, once the event is over */}
+            {isEventOver(event) && isRegistered && !attended && !surveySubmitted && (
+              <div className="flex items-start gap-2 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
+                <ClipboardList className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                <p className="text-sm text-indigo-900">Feedback is for students who attended. If you were there, ask the organizer to mark you present.</p>
+              </div>
+            )}
+            {isEventOver(event) && isRegistered && attended && (
               surveySubmitted ? (
                 <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-2.5">
                   <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />

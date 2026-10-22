@@ -3,10 +3,10 @@
 import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  getAdaptedEvent, submitSurvey, getMyEventSurvey, isRegisteredForEvent,
+  getAdaptedEvent, submitSurvey, getMyEventSurvey, isRegisteredForEvent, didIAttend,
   getSurveyQuestions, type DbSurveyQuestion,
 } from "@/lib/db";
-import { isEventPast, type Event } from "@/lib/mock-data";
+import { isEventOver, type Event } from "@/lib/mock-data";
 import { ArrowLeft, Star, CheckCircle2, ThumbsUp, ThumbsDown, ClipboardList } from "lucide-react";
 import { format } from "date-fns";
 
@@ -126,6 +126,7 @@ export default function SurveyPage({ params }: { params: Promise<{ id: string }>
 
   const [event, setEvent] = useState<Event | null | undefined>(undefined);
   const [registered, setRegistered] = useState(false);
+  const [attended, setAttended] = useState<boolean | null>(null);
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
@@ -143,6 +144,7 @@ export default function SurveyPage({ params }: { params: Promise<{ id: string }>
   useEffect(() => {
     getAdaptedEvent(id).then(setEvent).catch(() => setEvent(null));
     isRegisteredForEvent(id).then(setRegistered).catch(console.error);
+    didIAttend(id).then(setAttended).catch(() => setAttended(false));
     getMyEventSurvey(id).then((s) => setAlreadySubmitted(!!s)).catch(console.error);
     getSurveyQuestions(id).then(setQuestions).catch(() => setQuestions([]));
   }, [id]);
@@ -150,7 +152,7 @@ export default function SurveyPage({ params }: { params: Promise<{ id: string }>
   if (event === undefined) return <div className="text-center py-20 text-gray-400">Loading…</div>;
   if (!event) return <div className="text-center py-20 text-gray-500">Event not found.</div>;
 
-  const isPast = isEventPast(event);
+  const isPast = isEventOver(event);
 
   if (!isPast) {
     return (
@@ -162,10 +164,13 @@ export default function SurveyPage({ params }: { params: Promise<{ id: string }>
     );
   }
 
-  if (!registered) {
+  if (attended === null) return <div className="text-center py-20 text-gray-400">Loading…</div>;
+
+  if (!attended && !alreadySubmitted && !done) {
     return (
       <div className="max-w-xl mx-auto text-center py-20 space-y-3">
-        <p className="text-gray-700 font-medium">Survey is only for registered attendees.</p>
+        <p className="text-gray-700 font-medium">{registered ? "Feedback is for students who attended." : "Survey is only for registered attendees."}</p>
+        {registered && <p className="text-gray-500 text-sm">If you were there, ask the organizer to mark you present.</p>}
         <button onClick={() => router.back()} className="text-indigo-600 text-sm hover:underline">Go back</button>
       </div>
     );
