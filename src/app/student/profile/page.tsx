@@ -10,7 +10,8 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { AvatarUpload } from "@/components/shared/AvatarUpload";
-import { STUDY_PROGRAMS, STUDENT_STATUSES, GERMAN_LEVELS } from "@/lib/profile-options";
+import { StudyProgramField } from "@/components/shared/StudyProgramField";
+import { STUDENT_STATUSES, GERMAN_LEVELS } from "@/lib/profile-options";
 
 export default function StudentProfilePage() {
   const { user, logout, refreshUser } = useAuth();
@@ -190,17 +191,15 @@ export default function StudentProfilePage() {
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5">Was studierst du? - What do you study / name of current study program?</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">Was studierst du? / What is your current degree programme?</label>
               <div className="relative">
-                <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <select
+                <BookOpen className="absolute left-3 top-[10px] w-4 h-4 text-gray-400 pointer-events-none" />
+                <StudyProgramField
                   value={form.studyProgram}
-                  onChange={(e) => setForm((f) => ({ ...f, studyProgram: e.target.value }))}
+                  onChange={(v) => setForm((f) => ({ ...f, studyProgram: v }))}
+                  placeholder="Select study program"
                   className="w-full h-9 rounded-md border border-input bg-background pl-9 pr-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                >
-                  <option value="">Select study program</option>
-                  {STUDY_PROGRAMS.map((o) => <option key={o} value={o}>{o}</option>)}
-                </select>
+                />
               </div>
             </div>
             <div>

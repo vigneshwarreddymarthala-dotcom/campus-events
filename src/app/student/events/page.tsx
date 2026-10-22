@@ -93,7 +93,7 @@ function StudentEventsPageInner() {
 
   // Calendar — show all events (upcoming + past) for the month
   const monthDays = eachDayOfInterval({ start: startOfMonth(calMonth), end: endOfMonth(calMonth) });
-  const startDow = startOfMonth(calMonth).getDay();
+  const startDow = (startOfMonth(calMonth).getDay() + 6) % 7; // Monday first
 
   const EventGrid = ({ events }: { events: Event[] }) => (
     <div className={view === "grid" ? "grid sm:grid-cols-2 lg:grid-cols-3 gap-5" : "space-y-3"}>
@@ -228,67 +228,50 @@ function StudentEventsPageInner() {
             </div>
           </div>
 
-          {/* Day headers — weekends highlighted */}
-          <div className="grid grid-cols-7 mb-1">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d, i) => (
-              <div key={d} className={`text-center text-xs font-semibold py-2 ${i === 0 || i === 6 ? "text-indigo-400" : "text-gray-400"}`}>
+          {/* Day headers */}
+          <div className="grid grid-cols-7 gap-1 mb-1">
+            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+              <div key={d} className="text-center text-[11px] sm:text-xs font-bold py-2 text-indigo-500">
                 {d}
               </div>
             ))}
           </div>
 
           {/* Day cells */}
-          <div className="grid grid-cols-7 gap-px bg-gray-100 rounded-xl overflow-hidden border border-gray-100">
+          <div className="grid grid-cols-7 gap-1">
             {Array.from({ length: startDow }).map((_, i) => (
-              <div key={`empty-${i}`} className="bg-gray-50 min-h-[72px]" />
+              <div key={`empty-${i}`} className="min-h-[76px] sm:min-h-[104px] rounded-lg sm:rounded-xl bg-gray-50/60" />
             ))}
             {monthDays.map((day) => {
               const dayEvents = allFiltered.filter((e) => isSameDay(parseISO(e.date), day));
-              const isWeekend = day.getDay() === 0 || day.getDay() === 6;
               const todayDate = isToday(day);
-              const categoryColors: Record<string, string> = {
-                workshop: "bg-blue-500", seminar: "bg-purple-500", competition: "bg-orange-500",
-                cultural: "bg-pink-500", sports: "bg-green-500", "guest-lecture": "bg-teal-500",
-                hackathon: "bg-indigo-500", other: "bg-gray-400",
-              };
               return (
                 <button
                   key={day.toISOString()}
                   onClick={() => dayEvents.length > 0 && router.push(`/student/events/${dayEvents[0].id}?from=calendar`)}
-                  className={`min-h-[72px] p-2 text-left transition-colors flex flex-col
-                    ${isWeekend ? "bg-indigo-50/40" : "bg-white"}
-                    ${dayEvents.length > 0 ? "hover:bg-indigo-50 cursor-pointer" : "cursor-default"}
+                  aria-label={`${format(day, "EEEE d MMMM")}, ${dayEvents.length} events`}
+                  className={`min-h-[76px] sm:min-h-[104px] min-w-0 p-1 sm:p-1.5 text-left rounded-lg sm:rounded-xl flex flex-col gap-0.5 transition-colors
+                    ${todayDate ? "bg-indigo-50 ring-1 ring-indigo-300" : "bg-[#F5F6FF]"}
+                    ${dayEvents.length > 0 ? "hover:bg-indigo-100 cursor-pointer" : "cursor-default"}
                   `}
                 >
-                  {/* Day number */}
-                  <span className={`text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full mb-1
-                    ${todayDate ? "bg-indigo-600 text-white" : isWeekend ? "text-indigo-500" : "text-gray-500"}
+                  <span className={`text-xs font-semibold min-w-6 h-6 px-1 flex items-center justify-center rounded-full self-center
+                    ${todayDate ? "bg-indigo-600 text-white" : "text-gray-600"}
                   `}>
                     {format(day, "d")}
                   </span>
-
-                  {/* Category dots */}
-                  {dayEvents.length > 0 && (
-                    <div className="flex flex-wrap gap-0.5 mt-auto">
-                      {dayEvents.slice(0, 4).map((e) => (
-                        <span
-                          key={e.id}
-                          className={`w-2 h-2 rounded-full ${isEventPast(e) ? "bg-gray-300" : categoryColors[e.category] ?? "bg-gray-400"}`}
-                          title={e.title}
-                        />
-                      ))}
-                      {dayEvents.length > 4 && (
-                        <span className="text-[10px] text-indigo-500 font-bold leading-none self-center">+{dayEvents.length - 4}</span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Show event title if only 1 event */}
-                  {dayEvents.length === 1 && (
-                    <span className="text-[10px] text-gray-500 truncate w-full leading-tight mt-0.5">{dayEvents[0].title}</span>
-                  )}
-                  {dayEvents.length > 1 && (
-                    <span className="text-[10px] text-indigo-500 font-medium mt-0.5">{dayEvents.length} events</span>
+                  {dayEvents.slice(0, 2).map((e) => (
+                    <span
+                      key={e.id}
+                      title={e.title}
+                      className={`block w-full truncate rounded px-1 py-0.5 text-[9px] sm:text-[11px] font-bold leading-tight
+                        ${isEventPast(e) ? "bg-gray-200 text-gray-500" : "bg-indigo-600 text-white"}`}
+                    >
+                      {e.title}
+                    </span>
+                  ))}
+                  {dayEvents.length > 2 && (
+                    <span className="text-[9px] sm:text-[11px] text-indigo-600 font-bold px-1">+{dayEvents.length - 2} more</span>
                   )}
                 </button>
               );
@@ -296,23 +279,14 @@ function StudentEventsPageInner() {
           </div>
 
           {/* Legend */}
-          <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t border-gray-100">
-            {[
-              { label: "Workshop", color: "bg-blue-500" },
-              { label: "Cultural", color: "bg-pink-500" },
-              { label: "Sports", color: "bg-green-500" },
-              { label: "Hackathon", color: "bg-indigo-500" },
-              { label: "Competition", color: "bg-orange-500" },
-              { label: "Seminar", color: "bg-purple-500" },
-            ].map((l) => (
-              <div key={l.label} className="flex items-center gap-1.5">
-                <span className={`w-2 h-2 rounded-full ${l.color}`} />
-                <span className="text-xs text-gray-400">{l.label}</span>
-              </div>
-            ))}
+          <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t border-gray-100">
             <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-gray-300" />
-              <span className="text-xs text-gray-400">Past</span>
+              <span className="w-3 h-3 rounded bg-indigo-600" />
+              <span className="text-xs text-gray-500">Upcoming</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded bg-gray-200" />
+              <span className="text-xs text-gray-500">Past</span>
             </div>
           </div>
         </div>

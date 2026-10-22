@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, GraduationCap, AlertCircle, CheckCircle2 } from "lucide-react";
 
-import { STUDY_PROGRAMS, STUDENT_STATUSES, GERMAN_LEVELS } from "@/lib/profile-options";
+import { StudyProgramField } from "@/components/shared/StudyProgramField";
+import { STUDENT_STATUSES, GERMAN_LEVELS } from "@/lib/profile-options";
 const ALLOWED_EMAIL_DOMAINS = ["stud.fh-sm.de", "gmail.com"];
 
 function isAllowedEmail(email: string) {
@@ -161,16 +162,12 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <Label htmlFor="studyProgram" className="leading-snug">Was studierst du? - What do you study / name of current study program?</Label>
-              <select
-                id="studyProgram"
+              <Label htmlFor="studyProgram" className="leading-snug">Was studierst du? / What is your current degree programme?</Label>
+              <StudyProgramField
                 value={form.studyProgram}
-                onChange={(e) => set("studyProgram", e.target.value)}
+                onChange={(v) => set("studyProgram", v)}
                 className="mt-1 w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-              >
-                <option value="">Select</option>
-                {STUDY_PROGRAMS.map((o) => <option key={o} value={o}>{o}</option>)}
-              </select>
+              />
             </div>
 
             <div>

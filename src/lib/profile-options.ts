@@ -18,3 +18,7 @@ export const GERMAN_LEVELS = [
   "Mittleres Niveau – Intermediate",
   "Fortgeschritten - Advanced",
 ];
+
+export const STUDY_QUESTION = "Was studierst du? / What is your current degree programme?";
+export const STUDY_OTHER_LABEL = "Sonstiges – bitte angeben: / Other – please specify:";
+export const isPresetProgram = (v: string) => STUDY_PROGRAMS.includes(v);
