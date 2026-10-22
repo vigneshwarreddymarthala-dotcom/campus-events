@@ -94,7 +94,7 @@ export default function AdminDashboard() {
         <Link href="/admin/events/new" className="shrink-0" aria-label="New event">
           <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2 text-sm px-3 sm:px-4">
             <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">New Event</span>
+            <span>New Event</span>
           </Button>
         </Link>
       </div>
@@ -151,7 +151,7 @@ export default function AdminDashboard() {
       {/* Main grid */}
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Upcoming events */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-4 min-w-0">
           <div className="flex items-center justify-between">
             <h2 className="text-base sm:text-lg font-semibold text-gray-900">Upcoming Events</h2>
             <Link href="/admin/events" className="text-sm text-indigo-600 hover:underline flex items-center gap-1">
@@ -167,7 +167,7 @@ export default function AdminDashboard() {
               {upcomingEvents.map((event) => {
                 const fillPct = Math.min(Math.round((event.registrations / event.capacity) * 100), 100);
                 return (
-                  <Link key={event.id} href={`/admin/events/${event.id}`}>
+                  <Link key={event.id} href={`/admin/events/${event.id}`} className="block min-w-0">
                     <Card className="p-3 sm:p-4 hover:shadow-sm hover:border-indigo-200 transition-all">
                       <div className="flex items-center gap-3">
                         <EventImage src={event.bannerImage} alt={event.title} className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover shrink-0" />
@@ -197,7 +197,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Right column */}
-        <div className="space-y-5">
+        <div className="space-y-5 min-w-0">
           {/* Recent registrations */}
           <div>
             <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Recent Registrations</h2>

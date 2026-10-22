@@ -6,7 +6,7 @@ import Link from "next/link";
 import { type Event } from "@/lib/mock-data";
 import { getAdaptedEvent, updateEvent } from "@/lib/db";
 import EventForm from "@/components/shared/EventForm";
-import { ArrowLeft, Users, Star, QrCode, Activity, Edit3, X, Megaphone } from "lucide-react";
+import { ArrowLeft, Users, Star, QrCode, Activity, Edit3, X, Megaphone, Share2, Check } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import QRCode from "react-qr-code";
 import RegistrantsTab from "@/app/admin/events/[id]/RegistrantsTab";
@@ -25,6 +25,7 @@ export default function EventManagementPanel({
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [showQR, setShowQR] = useState(false);
+  const [shared, setShared] = useState(false);
 
   useEffect(() => {
     getAdaptedEvent(id).then(setEvent).catch(() => setEvent(null));
@@ -74,6 +75,24 @@ export default function EventManagementPanel({
     }
   };
 
+  const shareEvent = async () => {
+    const url = `${window.location.origin}/student/events/${id}`;
+    const text = `${event.title} – ${event.date} · ${event.time}`;
+    try {
+      if (navigator.share) await navigator.share({ title: event.title, text, url });
+      else { await navigator.clipboard.writeText(`${text}\n${url}`); setShared(true); setTimeout(() => setShared(false), 2500); }
+    } catch { /* cancelled */ }
+  };
+
+  const actionTiles = [
+    { key: "qr", label: "Check-in QR", hint: "Show the code at the door", icon: QrCode, color: "text-indigo-600", bg: "bg-indigo-50", onClick: () => setShowQR(true) },
+    { key: "attendees", label: "Registrations", hint: `${event.registrations} registered`, icon: Users, color: "text-emerald-600", bg: "bg-emerald-50", onClick: () => setActiveTab("attendees") },
+    { key: "announce", label: "Notify students", hint: "Send an update", icon: Megaphone, color: "text-amber-600", bg: "bg-amber-50", onClick: () => setActiveTab("announce") },
+    { key: "surveys", label: "Survey", hint: "Questions and answers", icon: Star, color: "text-pink-600", bg: "bg-pink-50", onClick: () => setActiveTab("surveys") },
+    { key: "share", label: shared ? "Link copied!" : "Share event", hint: "Send the link", icon: shared ? Check : Share2, color: "text-blue-600", bg: "bg-blue-50", onClick: shareEvent },
+    { key: "edit", label: "Edit details", hint: "Title, date, venue", icon: Edit3, color: "text-gray-600", bg: "bg-gray-100", onClick: () => setActiveTab("edit") },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
@@ -91,8 +110,8 @@ export default function EventManagementPanel({
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="mb-6 bg-gray-100/50 p-1 rounded-xl flex items-center gap-1 w-fit flex-wrap">
-          <TabsList className="bg-transparent p-0 h-auto m-0 gap-1 flex-wrap">
+        <div className="mb-6 bg-gray-100/50 p-1 rounded-xl flex items-center gap-1 max-w-full overflow-x-auto flex-nowrap sm:w-fit [&>*]:shrink-0">
+          <TabsList className="bg-transparent p-0 h-auto m-0 gap-1 flex-nowrap">
             <TabsTrigger value="overview" className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <Activity className="w-4 h-4 mr-2" /> Overview
             </TabsTrigger>
@@ -106,7 +125,7 @@ export default function EventManagementPanel({
             <QrCode className="w-4 h-4 mr-2" /> QR Check-in
           </button>
 
-          <TabsList className="bg-transparent p-0 h-auto m-0 gap-1 flex-wrap">
+          <TabsList className="bg-transparent p-0 h-auto m-0 gap-1 flex-nowrap">
             <TabsTrigger value="attendees" className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <Users className="w-4 h-4 mr-2" /> Attendees
             </TabsTrigger>
@@ -123,6 +142,35 @@ export default function EventManagementPanel({
         </div>
 
         <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {actionTiles.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={t.onClick}
+                className="text-left bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 min-h-[120px] hover:border-indigo-300 hover:shadow-sm active:scale-[0.98] transition"
+              >
+                <span className={`w-12 h-12 ${t.bg} ${t.color} rounded-xl flex items-center justify-center mb-3`}>
+                  <t.icon className="w-6 h-6" />
+                </span>
+                <span className="block font-bold text-gray-900 text-[15px]">{t.label}</span>
+                <span className="block text-sm text-gray-500 mt-0.5">{t.hint}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="bg-indigo-50 rounded-2xl p-4 sm:p-5">
+            <p className="font-bold text-indigo-900 text-sm mb-3">Event day in 3 steps</p>
+            <ol className="space-y-2 text-sm text-gray-700">
+              {[["Before", "Send a reminder with Notify students."], ["At the door", "Open Check-in QR and let students scan it."], ["After", "Ask for feedback with a Survey."]].map(([h, t], i) => (
+                <li key={h} className="flex gap-3 items-start">
+                  <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                  <span><b className="text-gray-900">{h}:</b> {t}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white rounded-2xl border border-gray-200 p-6 flex items-center gap-4">
               <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">

@@ -648,3 +648,24 @@ After registering for an upcoming event, students can add it to their calendar: 
 | Jobs                      | `jobs`, `job_applications`                       |
 | Landing Page              | `events` (read)                                  |
 | Announcements / Push      | `notifications`, `push_tokens`                   |
+
+---
+
+## Organizer made simple (web mobile view + mobile apps)
+
+Organizers can run an event entirely from a phone, in the app or the mobile website.
+
+**Organizer home (app):** one big "Create a new event" button, a "Your next event" card with four quick buttons (Check-in, Guests, Notify, Survey), the totals, and the list of all events.
+
+**Manage event (app and website):** one screen per event with six big buttons:
+- **Check-in QR** — full-size QR code for the door with a live "x of y checked in" counter and a button to send the check-in link. Students scan it with the Spirits app.
+- **Registrations** — the guest list, search, manual check-in, export.
+- **Notify students** — pick who gets it (registered or all), tap a quick message (Reminder, Starting soon, Venue changed, Time changed, Thank you) or write your own. Students see it in the bell and as a phone notification.
+- **Survey** — response totals, star averages, what students said, and add or remove your own questions (stars, yes/no, comment).
+- **Share event** — send the event link.
+- **Edit details** — title, date, venue, capacity.
+- A short "Event day in 3 steps" guide: Before (notify), At the door (QR), After (survey).
+
+**Create event (app):** date and time are picked by tapping (Today / Tomorrow / In a week or a month calendar, hour and minute steppers), organizer name and email are filled in for you, and after publishing you land on the Manage event screen.
+
+Staff roles (admin, super admin, event head) all open the organizer home in the app.
