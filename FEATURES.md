@@ -669,3 +669,17 @@ Organizers can run an event entirely from a phone, in the app or the mobile webs
 **Create event (app):** date and time are picked by tapping (Today / Tomorrow / In a week or a month calendar, hour and minute steppers), organizer name and email are filled in for you, and after publishing you land on the Manage event screen.
 
 Staff roles (admin, super admin, event head) all open the organizer home in the app.
+
+---
+
+## Waiting list and cancelling
+
+**When an event is full**, the Register button becomes **Join waiting list**. Students on the list see their position, and the event page shows how many are waiting. The database decides who gets a seat (first come, first served), so two people tapping at once can never take the same last seat.
+
+**Cancelling:** a registered student taps **Cancel registration** and must give a reason (quick choices or "Other"). The registration moves to **Cancelled** and the reason is kept. Leaving the waiting list needs no reason.
+
+**Automatic move-up:** when a seat is freed, the first student on the waiting list takes it automatically and gets a notification (bell and phone alert). The organizer is notified of the cancellation and its reason.
+
+**For organizers:** the Registrants screen (website and app) has three lists: **Registered**, **Waiting list** (in order, with **Move to registered**) and **Cancelled** (with reasons). The top cards show Registered, Attended, No-show, Waiting list and Cancelled. Notify can target the waiting list. The CSV export includes status and cancel reason.
+
+Only registered students can check in (QR) and fill the survey (when marked present, after the event ends).
