@@ -17,7 +17,7 @@ import {
   Bookmark, BookmarkCheck, Share2, ExternalLink, CheckCircle2,
   AlertCircle, FileText, Tag, History, ClipboardList,
 } from "lucide-react";
-import { EventImage } from "@/components/shared/EventImage";
+import { EventBanner } from "@/components/shared/EventBanner";
 
 export default function StudentEventDetailPage({ params }: PageProps<"/student/events/[id]">) {
   return (
@@ -161,26 +161,29 @@ function StudentEventDetailPageInner({ params }: { params: PageProps<"/student/e
       <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Main content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Banner */}
-          <div className="relative rounded-2xl overflow-hidden h-64 sm:h-80 bg-gray-100">
-            {event.bannerLink ? (
-              <a href={event.bannerLink} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
-                <EventImage src={event.bannerImage} alt={event.title} className="w-full h-full object-cover" />
-              </a>
-            ) : (
-              <EventImage src={event.bannerImage} alt={event.title} className="w-full h-full object-cover" />
-            )}
-            <div className="absolute top-4 left-4">
+          {/* Banner: whole picture, any screen, tap to enlarge */}
+          <EventBanner src={event.bannerImage} alt={event.title} className="rounded-2xl h-64 sm:h-80 lg:h-[26rem]">
+            <div className="absolute top-4 left-4 pointer-events-none">
               <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${CATEGORY_COLORS[event.category]}`}>
                 {event.category.replace("-", " ")}
               </span>
             </div>
             {event.registrationFee === 0 ? (
-              <div className="absolute top-4 right-4 bg-green-500 text-white text-sm font-bold px-3 py-1 rounded-full">FREE</div>
+              <div className="absolute top-4 right-4 bg-green-500 text-white text-sm font-bold px-3 py-1 rounded-full pointer-events-none">FREE</div>
             ) : (
-              <div className="absolute top-4 right-4 bg-gray-900/80 text-white text-sm font-bold px-3 py-1 rounded-full">₹{event.registrationFee}</div>
+              <div className="absolute top-4 right-4 bg-gray-900/80 text-white text-sm font-bold px-3 py-1 rounded-full pointer-events-none">₹{event.registrationFee}</div>
             )}
-          </div>
+            {event.bannerLink && (
+              <a
+                href={event.bannerLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 bg-white/90 text-indigo-700 text-xs font-semibold px-2.5 py-1.5 rounded-full hover:bg-white"
+              >
+                Open link <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
+          </EventBanner>
 
           {/* Past event banner */}
           {isPast && (

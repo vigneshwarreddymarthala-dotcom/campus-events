@@ -112,7 +112,7 @@ export default function EventCard({
 
         {/* Banner — tall, full bleed */}
         <div className="relative h-48 bg-gray-100 overflow-hidden">
-          <EventImage src={event.bannerImage} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          <EventImage src={event.bannerImage} alt={event.title} fit="contain" className="w-full h-full" />
 
           {/* dim overlay for past events */}
           {isPast && <div className="absolute inset-0 bg-black/30" />}
